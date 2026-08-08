@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { createScript } from "../../utils";
 import { TelegramPanel } from "@/modules/telegram/ui/components/telegram-panel";
+import { McpPanel } from "../components/mcp-panel";
 
 export const IntegrationsView = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -120,6 +121,18 @@ export const IntegrationsView = () => {
               </p>
             </div>
             <TelegramPanel />
+          </div>
+
+          <Separator className="my-8" />
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <Label className="text-lg">AI agents</Label>
+              <p className="text-muted-foreground text-sm">
+                Let Claude or Codex manage your announcements and surveys for
+                you.
+              </p>
+            </div>
+            <McpPanel />
           </div>
         </div>
       </div>
