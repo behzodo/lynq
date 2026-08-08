@@ -1,6 +1,6 @@
 {
   "name": "lynq-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Lynq MCP server - sign in with your Lynq account and let an AI agent manage your widget announcements and surveys",
   "keywords": [
