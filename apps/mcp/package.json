@@ -22,7 +22,7 @@
     "url": "https://github.com/behzodo/lynq/issues"
   },
   "bin": {
-    "lynq-mcp": "./build/index.js"
+    "lynq-mcp": "build/index.js"
   },
   "files": [
     "build",
