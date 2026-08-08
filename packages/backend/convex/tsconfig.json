@@ -12,6 +12,11 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
 
+    /* Convex functions read configuration from process.env. Without this the
+     * typecheck fails on every `process` reference, and `convex dev` refuses
+     * to push - so nothing new ever reaches the deployment. */
+    "types": ["node"],
+
     /* These compiler options are required by Convex */
     "target": "ESNext",
     "lib": ["ES2021", "dom"],
