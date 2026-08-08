@@ -9,7 +9,7 @@ export const SITE = {
     "Lynq is a customer support platform: a live chat widget, ticketing with a kanban board, announcements, surveys and a Telegram bot - all from one dashboard.",
   url: process.env.NEXT_PUBLIC_APP_URL || "https://app.korvians.online",
   locale: "en_US",
-  themeColor: "#3b82f6",
+  themeColor: "#171717",
 } as const;
 
 export const KEYWORDS = [

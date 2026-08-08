@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
-import { verifyClerkToken } from "@clerk/mcp-tools/next";
 import { api } from "@workspace/backend/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 // Aliased Zod 4: the MCP SDK derives tool schemas from it, while the rest of
 // the app stays on Zod 3 for react-hook-form
@@ -21,6 +20,10 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  * here, before the call is made.
  */
 const secret = process.env.MCP_BACKEND_SECRET!;
+
+/** Clerk instance that issues the OAuth tokens we accept. */
+const CLERK_ISSUER =
+  process.env.CLERK_JWT_ISSUER_DOMAIN || "https://clerk.korvians.online";
 
 /** Hex colour, 3 or 6 digits, rendered straight into CSS by the widget. */
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -476,6 +479,39 @@ const handler = createMcpHandler((server) => {
   );
 });
 
+/**
+ * Clerk's own OAuth-token verification needs @clerk/nextjs v7; this app is on
+ * v6, where `acceptsToken: "oauth_token"` silently fails to authenticate. As an
+ * OAuth resource server all we owe the spec is proof the token is genuine, so
+ * verify it locally against Clerk's published keys instead.
+ */
+const JWKS = createRemoteJWKSet(
+  new URL(`${CLERK_ISSUER}/.well-known/jwks.json`),
+);
+
+async function verifyOAuthToken(token: string) {
+  const { payload } = await jwtVerify(token, JWKS, {
+    issuer: CLERK_ISSUER,
+    // Clerk stamps OAuth access tokens with this type; refusing anything else
+    // stops a session or ID token being replayed here
+    typ: "at+jwt",
+  });
+
+  if (!payload.sub) {
+    return undefined;
+  }
+
+  return {
+    token,
+    clientId: typeof payload.client_id === "string" ? payload.client_id : "",
+    scopes:
+      typeof payload.scope === "string" ? payload.scope.split(" ").filter(Boolean) : [],
+    // requireBearerAuth rejects a token whose expiry is unset
+    expiresAt: typeof payload.exp === "number" ? payload.exp : undefined,
+    extra: { userId: String(payload.sub) },
+  };
+}
+
 const authHandler = withMcpAuth(
   handler,
   async (_request: Request, token?: string) => {
@@ -485,8 +521,12 @@ const authHandler = withMcpAuth(
       return undefined;
     }
 
-    const clerkAuth = await auth({ acceptsToken: "oauth_token" });
-    return verifyClerkToken(clerkAuth, token);
+    try {
+      return await verifyOAuthToken(token);
+    } catch {
+      // Bad signature, wrong issuer, expired: same 401 challenge
+      return undefined;
+    }
   },
   {
     required: true,

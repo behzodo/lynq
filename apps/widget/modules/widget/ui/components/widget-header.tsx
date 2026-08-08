@@ -23,7 +23,7 @@ export const WidgetHeader = ({
       {/* Brand tint + scrim: keeps white text readable over the artwork */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-br from-primary/60 via-primary/40 to-[#0a4fd6]/75"
+        className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-br from-primary/60 via-primary/40 to-black/75"
       />
       <div
         aria-hidden

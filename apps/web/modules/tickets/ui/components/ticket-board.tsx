@@ -24,13 +24,13 @@ const DRAG_MIME = "application/x-echo-ticket";
 // Thin colored rail down the left edge of each card
 const PRIORITY_RAIL: Record<Ticket["priority"], string> = {
   low: "bg-muted-foreground/40",
-  medium: "bg-blue-500",
+  medium: "bg-foreground",
   high: "bg-amber-500",
   urgent: "bg-destructive",
 };
 
 const COLUMN_ACCENT: Record<Status, string> = {
-  open: "bg-blue-500",
+  open: "bg-foreground",
   in_progress: "bg-amber-500",
   waiting: "bg-purple-500",
   resolved: "bg-green-600",

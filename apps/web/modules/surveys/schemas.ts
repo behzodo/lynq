@@ -30,7 +30,7 @@ export const DEFAULT_SURVEY: SurveyFormSchema = {
 
 export const SURVEY_COLOR_PRESETS = [
   { name: "Dark", bgColor: "#111827", textColor: "#ffffff" },
-  { name: "Blue", bgColor: "#3b82f6", textColor: "#ffffff" },
+  { name: "White", bgColor: "#ffffff", textColor: "#171717" },
   { name: "Green", bgColor: "#16a34a", textColor: "#ffffff" },
   { name: "Purple", bgColor: "#7c3aed", textColor: "#ffffff" },
   { name: "Light", bgColor: "#f3f4f6", textColor: "#111827" },

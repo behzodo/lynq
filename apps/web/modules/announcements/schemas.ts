@@ -24,7 +24,7 @@ export const DEFAULT_ANNOUNCEMENT: AnnouncementFormSchema = {
   message: "",
   ctaLabel: "",
   ctaUrl: "",
-  bgColor: "#3b82f6",
+  bgColor: "#171717",
   textColor: "#ffffff",
   position: "top",
   dismissible: true,
@@ -32,7 +32,7 @@ export const DEFAULT_ANNOUNCEMENT: AnnouncementFormSchema = {
 };
 
 export const COLOR_PRESETS = [
-  { name: "Blue", bgColor: "#3b82f6", textColor: "#ffffff" },
+  { name: "Black", bgColor: "#171717", textColor: "#ffffff" },
   { name: "Dark", bgColor: "#111827", textColor: "#ffffff" },
   { name: "Green", bgColor: "#16a34a", textColor: "#ffffff" },
   { name: "Amber", bgColor: "#f59e0b", textColor: "#111827" },

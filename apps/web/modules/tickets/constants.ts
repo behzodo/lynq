@@ -30,7 +30,7 @@ export const TICKET_STATUS_LABELS = {
 } as const;
 
 export const TICKET_STATUS_CLASSES = {
-  open: "bg-blue-600 hover:bg-blue-600",
+  open: "bg-foreground hover:bg-foreground",
   in_progress: "bg-amber-500 hover:bg-amber-500",
   waiting: "bg-purple-600 hover:bg-purple-600",
   resolved: "bg-green-600 hover:bg-green-600",
@@ -39,7 +39,7 @@ export const TICKET_STATUS_CLASSES = {
 
 export const TICKET_PRIORITY_CLASSES = {
   low: "text-muted-foreground",
-  medium: "text-blue-600",
+  medium: "text-foreground",
   high: "text-amber-600",
   urgent: "text-destructive",
 } as const;

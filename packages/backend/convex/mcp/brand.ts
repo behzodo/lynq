@@ -33,7 +33,7 @@ export const get = query({
       defaultSuggestions: widgetSettings?.defaultSuggestions ?? null,
       hasLogo: Boolean(widgetSettings?.logoStorageId),
       // The widget chrome is this blue, so announcements that use it look native
-      widgetPrimaryColor: "#3b82f6",
+      widgetPrimaryColor: "#171717",
       activeAnnouncementCount: activeAnnouncements.length,
       // Colour pairs already in use, so the agent can stay consistent
       existingColorPairs: activeAnnouncements.map((announcement) => ({

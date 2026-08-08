@@ -239,7 +239,7 @@ import { createAnnouncementsController } from './announcements';
       width: ${BUTTON_SIZE}px;
       height: ${BUTTON_SIZE}px;
       border-radius: 50%;
-      background: #3b82f6;
+      background: #171717;
       color: white;
       border: none;
       cursor: grab;
@@ -410,7 +410,7 @@ import { createAnnouncementsController } from './announcements';
       }, 300);
       // Restore the brand logo, or the default chat icon
       button.innerHTML = closedButtonMarkup();
-      button.style.background = '#3b82f6';
+      button.style.background = '#171717';
     }
   }
   
