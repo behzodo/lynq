@@ -10,6 +10,7 @@
 
 import type * as constants from "../constants.js";
 import type * as http from "../http.js";
+import type * as lib_github from "../lib/github.js";
 import type * as lib_telegram from "../lib/telegram.js";
 import type * as lib_telegramHandler from "../lib/telegramHandler.js";
 import type * as lib_threads from "../lib/threads.js";
@@ -20,6 +21,7 @@ import type * as mcp_surveys from "../mcp/surveys.js";
 import type * as private_announcements from "../private/announcements.js";
 import type * as private_contactSessions from "../private/contactSessions.js";
 import type * as private_conversations from "../private/conversations.js";
+import type * as private_github from "../private/github.js";
 import type * as private_messages from "../private/messages.js";
 import type * as private_surveys from "../private/surveys.js";
 import type * as private_telegram from "../private/telegram.js";
@@ -35,6 +37,7 @@ import type * as public_tickets from "../public/tickets.js";
 import type * as public_widgetSettings from "../public/widgetSettings.js";
 import type * as system_contactSessions from "../system/contactSessions.js";
 import type * as system_conversations from "../system/conversations.js";
+import type * as system_github from "../system/github.js";
 import type * as system_telegram from "../system/telegram.js";
 import type * as users from "../users.js";
 
@@ -55,6 +58,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   http: typeof http;
+  "lib/github": typeof lib_github;
   "lib/telegram": typeof lib_telegram;
   "lib/telegramHandler": typeof lib_telegramHandler;
   "lib/threads": typeof lib_threads;
@@ -65,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   "private/announcements": typeof private_announcements;
   "private/contactSessions": typeof private_contactSessions;
   "private/conversations": typeof private_conversations;
+  "private/github": typeof private_github;
   "private/messages": typeof private_messages;
   "private/surveys": typeof private_surveys;
   "private/telegram": typeof private_telegram;
@@ -80,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   "public/widgetSettings": typeof public_widgetSettings;
   "system/contactSessions": typeof system_contactSessions;
   "system/conversations": typeof system_conversations;
+  "system/github": typeof system_github;
   "system/telegram": typeof system_telegram;
   users: typeof users;
 }>;

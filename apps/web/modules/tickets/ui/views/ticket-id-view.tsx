@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { Card, CardContent } from "@workspace/ui/components/card";
+import { GithubIssueCard } from "../components/github-issue-card";
 import {
   Select,
   SelectContent,
@@ -206,6 +207,8 @@ export const TicketIdView = ({ ticketId }: Props) => {
 
           {/* Sidebar */}
           <div className="space-y-4">
+            <GithubIssueCard ticketId={ticketId} />
+
             <Card>
               <CardContent className="space-y-4 py-4">
                 <p className="text-sm font-medium">Contact</p>

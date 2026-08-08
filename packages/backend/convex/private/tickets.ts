@@ -291,6 +291,25 @@ export const addMessage = mutation({
         text: `🎫 Ticket #${ticket.number}\n${agentDisplayName(identity)}:\n\n${args.body}`,
       },
     );
+
+    // Keep the GitHub issue readable as one thread, so a developer following it
+    // sees the support side without opening Lynq
+    const githubLink = await ctx.db
+      .query("githubIssueLinks")
+      .withIndex("by_ticket_id", (q) => q.eq("ticketId", ticket._id))
+      .unique();
+
+    if (githubLink) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.system.github.mirrorCommentToIssue,
+        {
+          organizationId: ticket.organizationId,
+          issueNumber: githubLink.issueNumber,
+          body: `**Support update from Lynq:**\n\n${args.body}`,
+        },
+      );
+    }
   },
 });
 

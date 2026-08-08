@@ -19,6 +19,7 @@ import {
   DocsSection,
   Step,
 } from "../components/docs-primitives";
+import { GithubPanel } from "../components/github-panel";
 import { McpPanel } from "../components/mcp-panel";
 import { TelegramPanel } from "@/modules/telegram/ui/components/telegram-panel";
 
@@ -27,6 +28,7 @@ const SECTIONS = [
   { id: "install", label: "Install the widget" },
   { id: "verify", label: "Verify" },
   { id: "messaging", label: "Messaging apps" },
+  { id: "github", label: "GitHub" },
   { id: "ai-agents", label: "AI agents" },
 ];
 
@@ -187,6 +189,17 @@ export const IntegrationsView = () => {
             title="Messaging apps"
           >
             <TelegramPanel />
+          </DocsSection>
+
+          <Separator />
+
+          <DocsSection
+            description="Turn a customer report into a tracked GitHub issue on your project board, and tell the customer when it ships."
+            eyebrow="Optional"
+            id="github"
+            title="GitHub issue tracking"
+          >
+            <GithubPanel />
           </DocsSection>
 
           <Separator />

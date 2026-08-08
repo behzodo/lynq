@@ -206,6 +206,75 @@ export default defineSchema({
   })
   .index("by_organization_id", ["organizationId"])
   .index("by_expires_at", ["expiresAt"]),
+  /**
+   * One GitHub App installation per organization, plus the cached Projects v2
+   * ids. Projects v2 is GraphQL-only and column ids are per-project, so they
+   * have to be discovered once and stored rather than hardcoded.
+   */
+  githubInstallations: defineTable({
+    organizationId: v.string(),
+    installationId: v.number(),
+    // Owner of the installation, e.g. the org or user login
+    accountLogin: v.string(),
+    // Repository new issues are opened in
+    repoOwner: v.optional(v.string()),
+    repoName: v.optional(v.string()),
+    // Projects v2 board issues get added to
+    projectNodeId: v.optional(v.string()),
+    projectNumber: v.optional(v.number()),
+    projectTitle: v.optional(v.string()),
+    // The single-select field acting as the kanban column
+    statusFieldId: v.optional(v.string()),
+    statusOptions: v.optional(
+      v.array(v.object({ id: v.string(), name: v.string() })),
+    ),
+    // Which column a freshly created issue lands in
+    backlogOptionId: v.optional(v.string()),
+    isActive: v.boolean(),
+  })
+    .index("by_organization_id", ["organizationId"])
+    .index("by_installation_id", ["installationId"]),
+
+  /**
+   * Links a Lynq ticket to its GitHub issue. GitHub owns status for linked
+   * tickets - one direction only - so these fields are a mirror, never a source.
+   */
+  githubIssueLinks: defineTable({
+    organizationId: v.string(),
+    ticketId: v.id("tickets"),
+    issueNumber: v.number(),
+    issueNodeId: v.string(),
+    issueUrl: v.string(),
+    // Present once the issue is on the project board
+    projectItemId: v.optional(v.string()),
+    // Mirrored from GitHub
+    issueState: v.union(v.literal("open"), v.literal("closed")),
+    // "not_planned" means closed as duplicate/wontfix - not something to
+    // announce to a customer as fixed
+    closedReason: v.optional(v.string()),
+    boardColumn: v.optional(v.string()),
+    closedAt: v.optional(v.number()),
+    // Set when the customer has been told it is fixed, so we only offer once
+    customerNotifiedAt: v.optional(v.number()),
+  })
+    .index("by_ticket_id", ["ticketId"])
+    .index("by_organization_id", ["organizationId"])
+    .index("by_issue_node_id", ["issueNodeId"])
+    .index("by_organization_id_and_issue_number", [
+      "organizationId",
+      "issueNumber",
+    ]),
+
+  /**
+   * Webhook delivery ids we have already processed. A single GitHub event can
+   * arrive repeatedly, so every handler is gated on this.
+   */
+  githubWebhookDeliveries: defineTable({
+    deliveryId: v.string(),
+    event: v.string(),
+    receivedAt: v.number(),
+  }).index("by_delivery_id", ["deliveryId"]),
+
   users: defineTable({
     name: v.string(),
   }),

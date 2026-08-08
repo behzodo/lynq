@@ -6,6 +6,7 @@ import {
   handleTelegramUpdate,
   TelegramUpdate,
 } from "./lib/telegramHandler";
+import { verifyWebhookSignature } from "./lib/github";
 
 const http = httpRouter();
 
@@ -207,6 +208,108 @@ http.route({
     } catch (error) {
       // Always 200 so Telegram doesn't retry a request that will fail again
       console.error("Telegram webhook failed", error);
+    }
+
+    return new Response(null, { status: 200 });
+  }),
+});
+
+/**
+ * GitHub App webhook. One endpoint serves every installation; the signature
+ * proves the call came from GitHub, and the delivery id makes replays harmless.
+ *
+ * Status flows GitHub -> Lynq only. Nothing here writes back to GitHub, which
+ * is what keeps the two boards from updating each other in a loop.
+ */
+http.route({
+  path: "/github/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    // The raw body is what the signature covers, so read it as text first
+    const rawBody = await request.text();
+
+    const valid = await verifyWebhookSignature(
+      rawBody,
+      request.headers.get("X-Hub-Signature-256"),
+    );
+
+    if (!valid) {
+      return new Response("Invalid signature", { status: 401 });
+    }
+
+    const event = request.headers.get("X-GitHub-Event") ?? "unknown";
+    const deliveryId = request.headers.get("X-GitHub-Delivery");
+
+    if (!deliveryId) {
+      return new Response("Missing delivery id", { status: 400 });
+    }
+
+    const isNew = await ctx.runMutation(internal.system.github.claimDelivery, {
+      deliveryId,
+      event,
+    });
+
+    // Already handled: answer 200 so GitHub stops retrying
+    if (!isNew) {
+      return new Response(null, { status: 200 });
+    }
+
+    let payload: {
+      action?: string;
+      issue?: { node_id?: string; state?: string; state_reason?: string | null };
+      installation?: { id?: number };
+      projects_v2_item?: { content_node_id?: string };
+      changes?: {
+        field_value?: {
+          field_name?: string;
+          to?: { name?: string } | null;
+        };
+      };
+    };
+
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+
+    try {
+      if (event === "issues" && payload.issue?.node_id) {
+        if (payload.action === "closed" || payload.action === "reopened") {
+          await ctx.runMutation(internal.system.github.applyIssueState, {
+            issueNodeId: payload.issue.node_id,
+            issueState: payload.action === "closed" ? "closed" : "open",
+            // "completed" vs "not_planned" is what separates a fix from a
+            // duplicate or won't-do
+            closedReason: payload.issue.state_reason ?? undefined,
+          });
+        }
+      }
+
+      if (
+        event === "projects_v2_item" &&
+        payload.action === "edited" &&
+        payload.projects_v2_item?.content_node_id &&
+        payload.changes?.field_value?.to?.name
+      ) {
+        await ctx.runMutation(internal.system.github.applyBoardColumn, {
+          issueNodeId: payload.projects_v2_item.content_node_id,
+          boardColumn: payload.changes.field_value.to.name,
+        });
+      }
+
+      if (event === "installation" && payload.installation?.id) {
+        if (payload.action === "deleted" || payload.action === "suspend") {
+          await ctx.runMutation(
+            internal.system.github.markInstallationRemoved,
+            { installationId: payload.installation.id },
+          );
+        }
+      }
+    } catch (error) {
+      console.error("GitHub webhook handler failed", error);
+      // 500 so GitHub shows the failure in the delivery log and we can redeliver
+      return new Response("Handler error", { status: 500 });
     }
 
     return new Response(null, { status: 200 });
