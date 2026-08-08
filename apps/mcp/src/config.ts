@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 /** Where the hosted MCP endpoint lives. Overridable for local development. */
 export const REMOTE_MCP_URL =
-  process.env.LYNQ_MCP_URL || "https://lynq-web.vercel.app/mcp";
+  process.env.LYNQ_MCP_URL || "https://app.korvians.online/mcp";
 
 /**
  * Public OAuth client registered in Clerk for this CLI. Public clients hold no
@@ -11,10 +11,10 @@ export const REMOTE_MCP_URL =
  * that started the flow - so shipping this id in the package is expected.
  */
 export const OAUTH_CLIENT_ID =
-  process.env.LYNQ_OAUTH_CLIENT_ID || "upyAKo2JpRPlsZCU";
+  process.env.LYNQ_OAUTH_CLIENT_ID || "L0LM2CLS7x20R71i";
 
 export const OAUTH_ISSUER =
-  process.env.LYNQ_OAUTH_ISSUER || "https://sure-garfish-42.clerk.accounts.dev";
+  process.env.LYNQ_OAUTH_ISSUER || "https://clerk.korvians.online";
 
 export const AUTHORIZATION_ENDPOINT = `${OAUTH_ISSUER}/oauth/authorize`;
 export const TOKEN_ENDPOINT = `${OAUTH_ISSUER}/oauth/token`;
