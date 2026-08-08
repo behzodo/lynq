@@ -69,7 +69,26 @@ function wrapPkcs1AsPkcs8(pkcs1: Uint8Array): Uint8Array {
  * vars usually hold, and either PKCS#1 or PKCS#8 input.
  */
 function pemToPkcs8(pem: string): ArrayBuffer {
-  const normalized = pem.replace(/\\n/g, "\n").trim();
+  let normalized = pem.replace(/\\n/g, "\n").trim();
+
+  // A multi-line PEM does not survive every env-var pipeline, so the key may
+  // also be supplied base64-encoded as a single line. Decode that first.
+  if (!normalized.includes("BEGIN")) {
+    try {
+      normalized = atob(normalized.replace(/\s+/g, "")).trim();
+    } catch {
+      throw new Error(
+        "GITHUB_APP_PRIVATE_KEY is neither a PEM nor base64-encoded PEM",
+      );
+    }
+  }
+
+  if (!/BEGIN [A-Z ]*PRIVATE KEY/.test(normalized)) {
+    throw new Error(
+      "GITHUB_APP_PRIVATE_KEY does not look like a private key - it may have been truncated when it was set",
+    );
+  }
+
   const isPkcs1 = /BEGIN RSA PRIVATE KEY/.test(normalized);
 
   const body = normalized

@@ -61,9 +61,13 @@ cd packages/backend
 npx convex env set GITHUB_APP_ID "1234567" --prod
 npx convex env set GITHUB_WEBHOOK_SECRET "the-secret-you-chose" --prod
 
-# Paste the whole .pem, including the BEGIN/END lines
-# The -- stops the CLI reading the key's leading dashes as a flag
-npx convex env set --prod -- GITHUB_APP_PRIVATE_KEY "$(cat /path/to/key.pem)"
+# Store the key base64-encoded on ONE line. A multi-line PEM gets truncated
+# to its first line when set as an env var, and every GitHub call then fails
+# with "invalid RSA PrivateKey".
+npx convex env set --prod GITHUB_APP_PRIVATE_KEY "$(base64 -w0 /path/to/key.pem)"
+
+# Verify it stored fully - expect ~2200 characters, not 32
+npx convex env get GITHUB_APP_PRIVATE_KEY --prod | wc -c
 ```
 
 The private key is a real credential — it can mint tokens for every
