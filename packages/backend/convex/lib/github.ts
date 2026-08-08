@@ -26,9 +26,51 @@ const base64Url = (input: ArrayBuffer | string) => {
     .replace(/=/g, "");
 };
 
-/** PEM -> ArrayBuffer, tolerating the \n-escaped form env vars usually hold. */
+/** DER length octets for a given content length. */
+function derLength(length: number): number[] {
+  if (length < 0x80) {
+    return [length];
+  }
+
+  const bytes: number[] = [];
+  let remaining = length;
+
+  while (remaining > 0) {
+    bytes.unshift(remaining & 0xff);
+    remaining >>= 8;
+  }
+
+  return [0x80 | bytes.length, ...bytes];
+}
+
+/**
+ * GitHub hands out PKCS#1 keys ("BEGIN RSA PRIVATE KEY") but Web Crypto only
+ * imports PKCS#8, so the PKCS#1 body is wrapped in the PKCS#8 envelope:
+ *
+ *   SEQUENCE { INTEGER 0, AlgorithmIdentifier { rsaEncryption, NULL }, OCTET STRING }
+ */
+function wrapPkcs1AsPkcs8(pkcs1: Uint8Array): Uint8Array {
+  // AlgorithmIdentifier for rsaEncryption (1.2.840.113549.1.1.1) with NULL params
+  const algorithm = [
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
+    0x01, 0x05, 0x00,
+  ];
+
+  const octetString = [0x04, ...derLength(pkcs1.length), ...pkcs1];
+  const version = [0x02, 0x01, 0x00];
+
+  const contents = [...version, ...algorithm, ...octetString];
+
+  return new Uint8Array([0x30, ...derLength(contents.length), ...contents]);
+}
+
+/**
+ * PEM -> PKCS#8 ArrayBuffer, tolerating the \n-escaped single-line form that env
+ * vars usually hold, and either PKCS#1 or PKCS#8 input.
+ */
 function pemToPkcs8(pem: string): ArrayBuffer {
   const normalized = pem.replace(/\\n/g, "\n").trim();
+  const isPkcs1 = /BEGIN RSA PRIVATE KEY/.test(normalized);
 
   const body = normalized
     .replace(/-----BEGIN [^-]+-----/, "")
@@ -42,7 +84,10 @@ function pemToPkcs8(pem: string): ArrayBuffer {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  return bytes.buffer;
+  const pkcs8 = isPkcs1 ? wrapPkcs1AsPkcs8(bytes) : bytes;
+
+  // Copy into a standalone buffer so the caller gets an exact-length ArrayBuffer
+  return pkcs8.slice().buffer;
 }
 
 async function createAppJwt(): Promise<string> {

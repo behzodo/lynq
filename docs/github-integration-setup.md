@@ -62,7 +62,8 @@ npx convex env set GITHUB_APP_ID "1234567" --prod
 npx convex env set GITHUB_WEBHOOK_SECRET "the-secret-you-chose" --prod
 
 # Paste the whole .pem, including the BEGIN/END lines
-npx convex env set GITHUB_APP_PRIVATE_KEY "$(cat /path/to/key.pem)" --prod
+# The -- stops the CLI reading the key's leading dashes as a flag
+npx convex env set --prod -- GITHUB_APP_PRIVATE_KEY "$(cat /path/to/key.pem)"
 ```
 
 The private key is a real credential — it can mint tokens for every
