@@ -7,13 +7,13 @@ import { toast } from "sonner";
 const MCP_URL =
   process.env.NEXT_PUBLIC_MCP_URL || "https://lynq-web.vercel.app/mcp";
 
-const CLAUDE_COMMAND = `claude mcp add --transport http lynq ${MCP_URL}`;
+const CLAUDE_COMMAND = `claude mcp add lynq -- npx -y @lynq/mcp`;
 
 const CLIENT_CONFIG = `{
   "mcpServers": {
     "lynq": {
-      "type": "http",
-      "url": "${MCP_URL}"
+      "command": "npx",
+      "args": ["-y", "@lynq/mcp"]
     }
   }
 }`;
@@ -79,9 +79,8 @@ export const McpPanel = () => {
       <div className="space-y-1">
         <p className="font-medium text-sm">2. Sign in</p>
         <p className="text-muted-foreground text-sm">
-          The first time the agent uses a tool, your browser opens a Lynq consent
-          screen. Choose <span className="font-medium">Allow</span> and you are
-          connected.
+          The first time it runs, a browser tab opens asking you to sign in to
+          Lynq. Approve it once and it is remembered — no key to copy.
         </p>
       </div>
 

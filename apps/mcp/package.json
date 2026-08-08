@@ -1,0 +1,21 @@
+{
+  "name": "@lynq/mcp",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Lynq MCP server - sign in with your Lynq account and let an AI agent manage your widget announcements and surveys",
+  "bin": {
+    "lynq-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5.7.3"
+  }
+}
