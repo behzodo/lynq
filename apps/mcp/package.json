@@ -1,18 +1,41 @@
 {
-  "name": "@lynq/mcp",
+  "name": "lynq-mcp",
   "version": "0.2.0",
   "type": "module",
   "description": "Lynq MCP server - sign in with your Lynq account and let an AI agent manage your widget announcements and surveys",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "lynq",
+    "claude",
+    "ai",
+    "announcements"
+  ],
+  "license": "MIT",
+  "homepage": "https://lynq-web.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/behzodo/lynq.git",
+    "directory": "apps/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/behzodo/lynq/issues"
+  },
   "bin": {
     "lynq-mcp": "./build/index.js"
   },
   "files": [
-    "build"
+    "build",
+    "README.md"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -1,4 +1,4 @@
-# @lynq/mcp
+# lynq-mcp
 
 Connect Claude, Codex, or any MCP client to your [Lynq](https://lynq-web.vercel.app)
 account. Ask the agent for a banner and it writes the copy, picks colours that
@@ -11,7 +11,7 @@ You sign in with your Lynq account in the browser. There is no API key to copy.
 Add it to your MCP client:
 
 ```bash
-claude mcp add lynq -- npx -y @lynq/mcp
+claude mcp add lynq -- npx -y lynq-mcp
 ```
 
 Or, for clients that use a config file:
@@ -21,7 +21,7 @@ Or, for clients that use a config file:
   "mcpServers": {
     "lynq": {
       "command": "npx",
-      "args": ["-y", "@lynq/mcp"]
+      "args": ["-y", "lynq-mcp"]
     }
   }
 }
@@ -33,7 +33,7 @@ Approve it once and the sign-in is remembered — later runs go straight through
 To sign in ahead of time:
 
 ```bash
-npx @lynq/mcp login
+npx lynq-mcp login
 ```
 
 ## Commands
