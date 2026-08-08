@@ -1,50 +1,30 @@
 import { ConvexError } from "convex/values";
-import { MutationCtx, QueryCtx } from "../_generated/server";
 
 /**
- * Resolves an API key to its organization. This is the only authentication the
- * MCP endpoints have - an AI agent has no Clerk session - so every handler in
- * this folder must start here and scope its work to the returned org.
+ * These endpoints are reachable by anyone who knows the deployment URL, so the
+ * organization id alone can never be the authorization - it is caller-supplied.
+ *
+ * The MCP route in the web app is the only trusted caller: it verifies the
+ * Clerk OAuth token, confirms the user really belongs to the organization, and
+ * only then calls in with this shared secret. Treat the secret as the boundary
+ * between "already authenticated by the route" and the open internet.
  */
-export async function orgIdFromApiKey(
-  ctx: QueryCtx | MutationCtx,
-  apiKey: string,
-) {
-  const record = await ctx.db
-    .query("apiKeys")
-    .withIndex("by_key", (q) => q.eq("key", apiKey))
-    .unique();
+export function assertMcpSecret(secret: string) {
+  const expected = process.env.MCP_BACKEND_SECRET;
 
-  if (!record) {
+  if (!expected) {
     throw new ConvexError({
-      code: "UNAUTHORIZED",
-      message: "Invalid API key",
+      code: "MISCONFIGURED",
+      message: "MCP_BACKEND_SECRET is not set on this deployment",
     });
   }
 
-  return record.organizationId;
-}
-
-/**
- * Same as above, but also stamps last usage. Mutations only - queries cannot
- * write.
- */
-export async function orgIdFromApiKeyAndTouch(ctx: MutationCtx, apiKey: string) {
-  const record = await ctx.db
-    .query("apiKeys")
-    .withIndex("by_key", (q) => q.eq("key", apiKey))
-    .unique();
-
-  if (!record) {
+  if (secret !== expected) {
     throw new ConvexError({
       code: "UNAUTHORIZED",
-      message: "Invalid API key",
+      message: "Invalid MCP credentials",
     });
   }
-
-  await ctx.db.patch(record._id, { lastUsedAt: Date.now() });
-
-  return record.organizationId;
 }
 
 /** Guards against one organization touching another's row. */

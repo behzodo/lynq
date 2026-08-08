@@ -1,10 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import {
-  assertSameOrg,
-  orgIdFromApiKey,
-  orgIdFromApiKeyAndTouch,
-} from "./lib";
+import { assertMcpSecret, assertSameOrg } from "./lib";
 
 const surveyFields = {
   title: v.string(),
@@ -25,10 +21,12 @@ const surveyFields = {
 
 export const getMany = query({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKey(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     return await ctx.db
       .query("surveys")
@@ -40,12 +38,14 @@ export const getMany = query({
 
 export const create = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     ...surveyFields,
   },
   handler: async (ctx, args) => {
-    const { apiKey, ...fields } = args;
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, apiKey);
+    const { secret, organizationId, ...fields } = args;
+    assertMcpSecret(secret);
+    const orgId = organizationId;
 
     return await ctx.db.insert("surveys", {
       ...fields,
@@ -56,13 +56,15 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     surveyId: v.id("surveys"),
     ...surveyFields,
   },
   handler: async (ctx, args) => {
-    const { apiKey, surveyId, ...fields } = args;
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, apiKey);
+    const { secret, organizationId, surveyId, ...fields } = args;
+    assertMcpSecret(secret);
+    const orgId = organizationId;
 
     const survey = await ctx.db.get(surveyId);
 
@@ -78,12 +80,14 @@ export const update = mutation({
 
 export const setActive = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     surveyId: v.id("surveys"),
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const survey = await ctx.db.get(args.surveyId);
 
@@ -99,11 +103,13 @@ export const setActive = mutation({
 
 export const remove = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const survey = await ctx.db.get(args.surveyId);
 
@@ -119,11 +125,13 @@ export const remove = mutation({
 
 export const getResults = query({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKey(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const survey = await ctx.db.get(args.surveyId);
 

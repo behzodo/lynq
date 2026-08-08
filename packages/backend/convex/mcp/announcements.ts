@@ -1,10 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import {
-  assertSameOrg,
-  orgIdFromApiKey,
-  orgIdFromApiKeyAndTouch,
-} from "./lib";
+import { assertMcpSecret, assertSameOrg } from "./lib";
 
 const announcementFields = {
   type: v.union(v.literal("banner"), v.literal("popup")),
@@ -21,10 +17,12 @@ const announcementFields = {
 
 export const getMany = query({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKey(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     return await ctx.db
       .query("announcements")
@@ -36,12 +34,14 @@ export const getMany = query({
 
 export const create = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     ...announcementFields,
   },
   handler: async (ctx, args) => {
-    const { apiKey, ...fields } = args;
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, apiKey);
+    const { secret, organizationId, ...fields } = args;
+    assertMcpSecret(secret);
+    const orgId = organizationId;
 
     return await ctx.db.insert("announcements", {
       ...fields,
@@ -52,13 +52,15 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     announcementId: v.id("announcements"),
     ...announcementFields,
   },
   handler: async (ctx, args) => {
-    const { apiKey, announcementId, ...fields } = args;
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, apiKey);
+    const { secret, organizationId, announcementId, ...fields } = args;
+    assertMcpSecret(secret);
+    const orgId = organizationId;
 
     const announcement = await ctx.db.get(announcementId);
 
@@ -77,12 +79,14 @@ export const update = mutation({
 
 export const setActive = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     announcementId: v.id("announcements"),
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const announcement = await ctx.db.get(args.announcementId);
 
@@ -101,11 +105,13 @@ export const setActive = mutation({
 
 export const remove = mutation({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
     announcementId: v.id("announcements"),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKeyAndTouch(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const announcement = await ctx.db.get(args.announcementId);
 

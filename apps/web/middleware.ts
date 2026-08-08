@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
+/**
+ * The MCP endpoint authenticates itself with an OAuth bearer token, and the
+ * .well-known documents must stay reachable without a session - they are how a
+ * client discovers where to send the user to sign in. Redirecting either to
+ * /sign-in would break the OAuth flow before it starts.
+ */
+const isMcpRoute = createRouteMatcher([
+  "/mcp(.*)",
+  "/sse(.*)",
+  "/message(.*)",
+  "/.well-known(.*)",
+]);
+
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
@@ -13,6 +26,10 @@ const isOrgFreeRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  if (isMcpRoute(req)) {
+    return NextResponse.next();
+  }
+
   const { userId, orgId } = await auth();
 
   if (!isPublicRoute(req)) {

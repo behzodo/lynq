@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { orgIdFromApiKey } from "./lib";
+import { assertMcpSecret } from "./lib";
 
 /**
  * Gives the agent enough context to write on-brand copy and pick colours that
@@ -8,10 +8,12 @@ import { orgIdFromApiKey } from "./lib";
  */
 export const get = query({
   args: {
-    apiKey: v.string(),
+    secret: v.string(),
+    organizationId: v.string(),
   },
   handler: async (ctx, args) => {
-    const orgId = await orgIdFromApiKey(ctx, args.apiKey);
+    assertMcpSecret(args.secret);
+    const orgId = args.organizationId;
 
     const widgetSettings = await ctx.db
       .query("widgetSettings")

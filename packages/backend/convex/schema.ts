@@ -206,18 +206,6 @@ export default defineSchema({
   })
   .index("by_organization_id", ["organizationId"])
   .index("by_expires_at", ["expiresAt"]),
-  // Machine credentials for the MCP server. An AI agent has no browser session,
-  // so the key is what ties a request back to an organization.
-  apiKeys: defineTable({
-    organizationId: v.string(),
-    name: v.string(),
-    key: v.string(),
-    // Shown in the dashboard so a key can be identified without revealing it
-    preview: v.string(),
-    lastUsedAt: v.optional(v.number()),
-  })
-    .index("by_key", ["key"])
-    .index("by_organization_id", ["organizationId"]),
   users: defineTable({
     name: v.string(),
   }),

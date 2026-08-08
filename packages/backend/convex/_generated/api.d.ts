@@ -18,7 +18,6 @@ import type * as mcp_brand from "../mcp/brand.js";
 import type * as mcp_lib from "../mcp/lib.js";
 import type * as mcp_surveys from "../mcp/surveys.js";
 import type * as private_announcements from "../private/announcements.js";
-import type * as private_apiKeys from "../private/apiKeys.js";
 import type * as private_contactSessions from "../private/contactSessions.js";
 import type * as private_conversations from "../private/conversations.js";
 import type * as private_messages from "../private/messages.js";
@@ -64,7 +63,6 @@ declare const fullApi: ApiFromModules<{
   "mcp/lib": typeof mcp_lib;
   "mcp/surveys": typeof mcp_surveys;
   "private/announcements": typeof private_announcements;
-  "private/apiKeys": typeof private_apiKeys;
   "private/contactSessions": typeof private_contactSessions;
   "private/conversations": typeof private_conversations;
   "private/messages": typeof private_messages;
