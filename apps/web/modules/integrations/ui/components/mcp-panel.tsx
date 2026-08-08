@@ -7,13 +7,14 @@ import { toast } from "sonner";
 const MCP_URL =
   process.env.NEXT_PUBLIC_MCP_URL || "https://lynq-web.vercel.app/mcp";
 
-const CLAUDE_COMMAND = `claude mcp add lynq -- npx -y lynq-mcp`;
+// @latest so npx does not serve a stale cached build
+const CLAUDE_COMMAND = `claude mcp add lynq -- npx -y lynq-mcp@latest`;
 
 const CLIENT_CONFIG = `{
   "mcpServers": {
     "lynq": {
       "command": "npx",
-      "args": ["-y", "lynq-mcp"]
+      "args": ["-y", "lynq-mcp@latest"]
     }
   }
 }`;
