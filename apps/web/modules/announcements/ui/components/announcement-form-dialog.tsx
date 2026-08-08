@@ -42,6 +42,11 @@ import {
   DEFAULT_ANNOUNCEMENT,
 } from "../../schemas";
 import { AnnouncementPreview } from "./announcement-preview";
+import { DepartmentField } from "@/modules/departments/ui/components/department-field";
+import {
+  toDepartmentArg,
+  toDepartmentField,
+} from "@/modules/departments/constants";
 
 interface Props {
   open: boolean;
@@ -72,6 +77,7 @@ export const AnnouncementFormDialog = ({
     form.reset(
       announcement
         ? {
+            departmentId: toDepartmentField(announcement.departmentId),
             type: announcement.type,
             title: announcement.title,
             message: announcement.message,
@@ -90,12 +96,18 @@ export const AnnouncementFormDialog = ({
   const values = form.watch();
 
   const onSubmit = async (data: AnnouncementFormSchema) => {
+    // "all" is a form-only sentinel - Convex wants the field absent
+    const payload = {
+      ...data,
+      departmentId: toDepartmentArg(data.departmentId),
+    };
+
     try {
       if (announcement) {
-        await update({ announcementId: announcement._id, ...data });
+        await update({ announcementId: announcement._id, ...payload });
         toast.success("Announcement updated");
       } else {
-        await create(data);
+        await create(payload);
         toast.success("Announcement created");
       }
 
@@ -125,6 +137,12 @@ export const AnnouncementFormDialog = ({
 
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <DepartmentField
+              control={form.control}
+              description="Only pages whose snippet names this department will show it"
+              name="departmentId"
+            />
+
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}

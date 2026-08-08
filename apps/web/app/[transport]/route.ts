@@ -1,4 +1,5 @@
 import { api } from "@workspace/backend/_generated/api";
+import type { Id } from "@workspace/backend/_generated/dataModel";
 import { ConvexHttpClient } from "convex/browser";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
@@ -123,7 +124,27 @@ function tool<A extends { organizationId?: string }>(
   };
 }
 
+/**
+ * Shared by announcements and surveys. Omitted means organization-wide, which
+ * is the safe default: it behaves exactly as it did before departments.
+ */
+const departmentId = z
+  .string()
+  .optional()
+  .describe(
+    "Id from list_departments. Omit to show on every site in the organization.",
+  );
+
+/**
+ * The agent hands us a plain string. Convex validates that it really is a
+ * department id, and the mutation re-checks it belongs to this organization,
+ * so the cast only bridges the type systems.
+ */
+const asDepartmentId = (value?: string) =>
+  value ? (value as Id<"departments">) : undefined;
+
 const announcementFields = {
+  departmentId,
   type: z
     .enum(["banner", "popup"])
     .describe("banner sits along the top or bottom edge; popup is centered"),
@@ -147,6 +168,7 @@ const announcementFields = {
 };
 
 const surveyFields = {
+  departmentId,
   title: z.string().min(1).describe("Internal name for the survey"),
   question: z.string().min(1).describe("The question shown to the visitor"),
   type: z
@@ -218,6 +240,23 @@ const handler = createMcpHandler((server) => {
     ),
   );
 
+  server.registerTool(
+    "list_departments",
+    {
+      description:
+        "List the departments (separate products or sites) in this organization. Call this before creating an announcement or survey meant for only one of them.",
+      inputSchema: z.object({ organizationId }),
+    },
+    tool(async (_args: { organizationId?: string }, orgId) =>
+      text(
+        await convex.query(api.mcp.departments.getMany, {
+          secret,
+          organizationId: orgId,
+        }),
+      ),
+    ),
+  );
+
   // ------------------------------------------------------ announcements
 
   server.registerTool(
@@ -250,6 +289,7 @@ const handler = createMcpHandler((server) => {
         secret,
         organizationId: orgId,
         ...fields,
+        departmentId: asDepartmentId(fields.departmentId),
       });
 
       return text({ announcementId: id, published: fields.isActive });
@@ -283,6 +323,7 @@ const handler = createMcpHandler((server) => {
           organizationId: orgId,
           announcementId: announcementId as never,
           ...fields,
+          departmentId: asDepartmentId(fields.departmentId),
         });
 
         return text(`Updated ${announcementId}`);
@@ -381,6 +422,7 @@ const handler = createMcpHandler((server) => {
         secret,
         organizationId: orgId,
         ...fields,
+        departmentId: asDepartmentId(fields.departmentId),
       });
 
       return text({ surveyId: id, published: fields.isActive });
@@ -406,6 +448,7 @@ const handler = createMcpHandler((server) => {
         organizationId: orgId,
         surveyId: surveyId as never,
         ...fields,
+        departmentId: asDepartmentId(fields.departmentId),
       });
 
       return text(`Updated ${surveyId}`);

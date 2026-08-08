@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { ALL_DEPARTMENTS } from "@/modules/departments/constants";
 
 export const announcementSchema = z.object({
+  // ALL_DEPARTMENTS ("all") means organization-wide; mapped to undefined on save
+  departmentId: z.string().optional(),
   type: z.enum(["banner", "popup"]),
   title: z.string().min(1, "Title is required"),
   message: z.string().min(1, "Message is required"),
@@ -19,6 +22,7 @@ export const announcementSchema = z.object({
 export type AnnouncementFormSchema = z.infer<typeof announcementSchema>;
 
 export const DEFAULT_ANNOUNCEMENT: AnnouncementFormSchema = {
+  departmentId: ALL_DEPARTMENTS,
   type: "banner",
   title: "",
   message: "",

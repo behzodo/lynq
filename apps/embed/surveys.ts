@@ -58,7 +58,10 @@ function positionStyles(position: Survey['position']): string {
   `;
 }
 
-export function createSurveysController(organizationId: string) {
+export function createSurveysController(
+  organizationId: string,
+  departmentId?: string | null,
+) {
   const mounted: HTMLElement[] = [];
   const timers: number[] = [];
 
@@ -322,7 +325,12 @@ export function createSurveysController(organizationId: string) {
     }
 
     try {
-      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/surveys?organizationId=${encodeURIComponent(organizationId)}`;
+      const params = new URLSearchParams({ organizationId });
+      if (departmentId) {
+        params.set('departmentId', departmentId);
+      }
+
+      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/surveys?${params.toString()}`;
       const response = await fetch(url);
 
       if (!response.ok) {

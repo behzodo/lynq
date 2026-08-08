@@ -23,6 +23,24 @@ export const INTEGRATIONS = [
 
 export type IntegrationId = (typeof INTEGRATIONS)[number]["id"];
 
+/** Filename shown in the code block header, so it is obvious where this goes. */
+export const FILENAME_BY_INTEGRATION: Record<string, string> = {
+  html: "index.html",
+  react: "ChatWidget.tsx",
+  nextjs: "app/layout.tsx",
+  javascript: "index.html",
+};
+
+export const PLACEMENT_BY_INTEGRATION: Record<string, string> = {
+  html: "Paste this just before the closing </body> tag on every page that should show the widget.",
+  react:
+    "Render <ChatWidget /> once, high in your tree — in your root layout or App component.",
+  nextjs:
+    "Add it to your root layout so the widget is present on every route.",
+  javascript:
+    "Paste this anywhere after the page has a <body>, or inside your existing bundle.",
+};
+
 // Where the embed script is hosted. Override per environment so these
 // snippets never drift from the deployed URL.
 const EMBED_SCRIPT_URL =

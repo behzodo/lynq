@@ -1,6 +1,7 @@
 import { EMBED_CONFIG } from './config';
 import { chatBubbleIcon, closeIcon } from './icons';
 import { createAnnouncementsController } from './announcements';
+import { createSurveysController } from './surveys';
 
 (function() {
   let iframe: HTMLIFrameElement | null = null;
@@ -8,6 +9,7 @@ import { createAnnouncementsController } from './announcements';
   let button: HTMLButtonElement | null = null;
   let isOpen = false;
   let announcements: ReturnType<typeof createAnnouncementsController> | null = null;
+  let surveys: ReturnType<typeof createSurveysController> | null = null;
 
   // Drag state
   const BUTTON_SIZE = 60;
@@ -31,22 +33,27 @@ import { createAnnouncementsController } from './announcements';
 
   // Get configuration from script tag
   let organizationId: string | null = null;
+  // Which product this page belongs to. Optional: without it the page only
+  // ever sees organization-wide announcements and surveys.
+  let departmentId: string | null = null;
   let position: 'bottom-right' | 'bottom-left' = EMBED_CONFIG.DEFAULT_POSITION;
-  
+
   // Try to get the current script
   const currentScript = document.currentScript as HTMLScriptElement;
   if (currentScript) {
     organizationId = currentScript.getAttribute('data-organization-id');
+    departmentId = currentScript.getAttribute('data-department-id');
     position = (currentScript.getAttribute('data-position') as 'bottom-right' | 'bottom-left') || EMBED_CONFIG.DEFAULT_POSITION;
   } else {
     // Fallback: find script tag by src
     const scripts = document.querySelectorAll('script[src*="embed"]');
-    const embedScript = Array.from(scripts).find(script => 
+    const embedScript = Array.from(scripts).find(script =>
       script.hasAttribute('data-organization-id')
     ) as HTMLScriptElement;
-    
+
     if (embedScript) {
       organizationId = embedScript.getAttribute('data-organization-id');
+      departmentId = embedScript.getAttribute('data-department-id');
       position = (embedScript.getAttribute('data-position') as 'bottom-right' | 'bottom-left') || EMBED_CONFIG.DEFAULT_POSITION;
     }
   }
@@ -314,9 +321,12 @@ import { createAnnouncementsController } from './announcements';
     // Handle messages from widget
     window.addEventListener('message', handleMessage);
 
-    // Banners and popups render on the host page, outside the widget iframe
-    announcements = createAnnouncementsController(organizationId!);
+    // Banners, popups and surveys render on the host page, outside the iframe
+    announcements = createAnnouncementsController(organizationId!, departmentId);
     announcements.load();
+
+    surveys = createSurveysController(organizationId!, departmentId);
+    surveys.load();
 
     loadBrandLogo();
   }
@@ -431,6 +441,10 @@ import { createAnnouncementsController } from './announcements';
       announcements.destroy();
       announcements = null;
     }
+    if (surveys) {
+      surveys.destroy();
+      surveys = null;
+    }
     if (container) {
       container.remove();
       container = null;
@@ -444,13 +458,17 @@ import { createAnnouncementsController } from './announcements';
   }
   
   // Function to reinitialize with new config
-  function reinit(newConfig: { organizationId?: string; position?: 'bottom-right' | 'bottom-left' }) {
+  function reinit(newConfig: { organizationId?: string; departmentId?: string | null; position?: 'bottom-right' | 'bottom-left' }) {
     // Destroy existing widget
     destroy();
-    
+
     // Update config
     if (newConfig.organizationId) {
       organizationId = newConfig.organizationId;
+    }
+    // Explicit null clears it, so a caller can move back to organization-wide
+    if (newConfig.departmentId !== undefined) {
+      departmentId = newConfig.departmentId;
     }
     if (newConfig.position) {
       position = newConfig.position;

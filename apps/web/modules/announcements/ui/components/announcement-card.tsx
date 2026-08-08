@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  Building2Icon,
   MousePointerClickIcon,
   PanelBottomIcon,
   PanelTopIcon,
@@ -10,10 +11,13 @@ import {
   Trash2Icon,
   XIcon,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@workspace/backend/_generated/api";
 import { Doc } from "@workspace/backend/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
+import { departmentLabel } from "@/modules/departments/constants";
 
 type Announcement = Doc<"announcements">;
 
@@ -88,6 +92,7 @@ export const AnnouncementCard = ({
   onEdit,
   onDelete,
 }: Props) => {
+  const departments = useQuery(api.private.departments.getMany);
   const isBanner = announcement.type === "banner";
 
   const PositionIcon = isBanner
@@ -136,6 +141,10 @@ export const AnnouncementCard = ({
                 Paused
               </span>
             )}
+            <span className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+              <Building2Icon className="size-3" />
+              {departmentLabel(departments, announcement.departmentId)}
+            </span>
           </div>
 
           <p className="line-clamp-2 text-muted-foreground text-sm">

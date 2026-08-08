@@ -3,13 +3,17 @@
 import { formatDistanceToNow } from "date-fns";
 import {
   BarChart3Icon,
+  Building2Icon,
   MessageSquareIcon,
   PencilIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@workspace/backend/_generated/api";
 import { Button } from "@workspace/ui/components/button";
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
+import { departmentLabel } from "@/modules/departments/constants";
 import { SURVEY_TYPE_LABELS, SurveyRow } from "../../schemas";
 
 interface Props {
@@ -64,6 +68,7 @@ export const SurveyCard = ({
   onEdit,
   onDelete,
 }: Props) => {
+  const departments = useQuery(api.private.departments.getMany);
   const hasScore = survey.type !== "text";
   const scale = survey.type === "nps" ? 10 : 5;
 
@@ -102,6 +107,10 @@ export const SurveyCard = ({
                 Paused
               </span>
             )}
+            <span className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+              <Building2Icon className="size-3" />
+              {departmentLabel(departments, survey.departmentId)}
+            </span>
           </div>
 
           <p className="line-clamp-1 text-muted-foreground text-sm">

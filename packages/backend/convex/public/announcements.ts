@@ -9,6 +9,12 @@ import { query } from "../_generated/server";
 export const getActive = query({
   args: {
     organizationId: v.string(),
+    /**
+     * Which department's site is asking. Taken as a plain string, not an Id,
+     * because this is reachable by anyone: a malformed value should quietly
+     * match nothing rather than fail argument validation.
+     */
+    departmentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const announcements = await ctx.db
@@ -18,7 +24,16 @@ export const getActive = query({
       )
       .collect();
 
-    return announcements.map((announcement) => ({
+    // Organization-wide announcements (no departmentId) show everywhere. A page
+    // that doesn't name a department therefore sees only those, which is what
+    // installs made before departments existed keep doing.
+    const visible = announcements.filter(
+      (announcement) =>
+        announcement.departmentId === undefined ||
+        announcement.departmentId === args.departmentId,
+    );
+
+    return visible.map((announcement) => ({
       id: announcement._id,
       type: announcement.type,
       title: announcement.title,

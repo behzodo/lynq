@@ -33,9 +33,9 @@ http.route({
   path: "/announcements",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    const organizationId = new URL(request.url).searchParams.get(
-      "organizationId",
-    );
+    const params = new URL(request.url).searchParams;
+    const organizationId = params.get("organizationId");
+    const departmentId = params.get("departmentId") ?? undefined;
 
     if (!organizationId) {
       return json({ error: "Missing organizationId" }, 400);
@@ -43,9 +43,11 @@ http.route({
 
     const announcements = await ctx.runQuery(api.public.announcements.getActive, {
       organizationId,
+      departmentId,
     });
 
     return json({ announcements }, 200, {
+      // Varies by department, so the cache key must include it
       "Cache-Control": "public, max-age=30",
     });
   }),
@@ -63,9 +65,9 @@ http.route({
   path: "/surveys",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
-    const organizationId = new URL(request.url).searchParams.get(
-      "organizationId",
-    );
+    const params = new URL(request.url).searchParams;
+    const organizationId = params.get("organizationId");
+    const departmentId = params.get("departmentId") ?? undefined;
 
     if (!organizationId) {
       return json({ error: "Missing organizationId" }, 400);
@@ -73,6 +75,7 @@ http.route({
 
     const surveys = await ctx.runQuery(api.public.surveys.getActive, {
       organizationId,
+      departmentId,
     });
 
     return json({ surveys }, 200, { "Cache-Control": "public, max-age=30" });

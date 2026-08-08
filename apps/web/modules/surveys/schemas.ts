@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Doc } from "@workspace/backend/_generated/dataModel";
+import { ALL_DEPARTMENTS } from "@/modules/departments/constants";
 
 /** A survey plus the response summary the list view renders. */
 export type SurveyRow = Doc<"surveys"> & {
@@ -11,6 +12,8 @@ export type SurveyRow = Doc<"surveys"> & {
 };
 
 export const surveySchema = z.object({
+  // ALL_DEPARTMENTS ("all") means organization-wide; mapped to undefined on save
+  departmentId: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   question: z.string().min(1, "Question is required"),
   type: z.enum(["rating", "nps", "text"]),
@@ -26,6 +29,7 @@ export const surveySchema = z.object({
 export type SurveyFormSchema = z.infer<typeof surveySchema>;
 
 export const DEFAULT_SURVEY: SurveyFormSchema = {
+  departmentId: ALL_DEPARTMENTS,
   title: "Quick question",
   question: "How would you rate your experience?",
   type: "rating",

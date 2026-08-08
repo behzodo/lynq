@@ -2,6 +2,19 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  /**
+   * A product or site inside one organization - "Delivery", "Warehouse".
+   * Announcements and surveys can be aimed at one of these instead of the
+   * whole organization, so a warehouse banner never shows on the courier app.
+   *
+   * Only announcements and surveys are scoped this way. Conversations,
+   * tickets, Telegram and GitHub remain organization-wide on purpose.
+   */
+  departments: defineTable({
+    organizationId: v.string(),
+    name: v.string(),
+    description: v.optional(v.string()),
+  }).index("by_organization_id", ["organizationId"]),
   widgetSettings: defineTable({
     organizationId: v.string(),
     greetMessage: v.string(),
@@ -16,6 +29,9 @@ export default defineSchema({
   .index("by_organization_id", ["organizationId"]),
   announcements: defineTable({
     organizationId: v.string(),
+    // Absent means organization-wide: it shows on every install, including
+    // the ones that predate departments.
+    departmentId: v.optional(v.id("departments")),
     type: v.union(v.literal("banner"), v.literal("popup")),
     title: v.string(),
     message: v.string(),
@@ -32,6 +48,8 @@ export default defineSchema({
     .index("by_organization_id_and_is_active", ["organizationId", "isActive"]),
   surveys: defineTable({
     organizationId: v.string(),
+    // Absent means organization-wide - see announcements above.
+    departmentId: v.optional(v.id("departments")),
     title: v.string(),
     question: v.string(),
     // rating = 1-5 stars, nps = 0-10 scale, text = free text only

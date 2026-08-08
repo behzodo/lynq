@@ -1,7 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { assertDepartmentInOrg } from "./departments";
 
 const surveyFields = {
+  // Absent means every department - see the schema comment
+  departmentId: v.optional(v.id("departments")),
   title: v.string(),
   question: v.string(),
   type: v.union(v.literal("rating"), v.literal("nps"), v.literal("text")),
@@ -102,6 +105,7 @@ export const create = mutation({
   args: surveyFields,
   handler: async (ctx, args) => {
     const orgId = await requireOrgId(ctx);
+    await assertDepartmentInOrg(ctx, args.departmentId, orgId);
 
     return await ctx.db.insert("surveys", {
       ...args,
@@ -132,6 +136,9 @@ export const update = mutation({
       });
     }
 
+    await assertDepartmentInOrg(ctx, fields.departmentId, orgId);
+
+    // departmentId: undefined clears the field, moving it back to all departments
     await ctx.db.patch(surveyId, fields);
   },
 });

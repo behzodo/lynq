@@ -1,8 +1,10 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { assertMcpSecret, assertSameOrg } from "./lib";
+import { assertDepartmentInOrg } from "../private/departments";
 
 const surveyFields = {
+  departmentId: v.optional(v.id("departments")),
   title: v.string(),
   question: v.string(),
   type: v.union(v.literal("rating"), v.literal("nps"), v.literal("text")),
@@ -47,6 +49,8 @@ export const create = mutation({
     assertMcpSecret(secret);
     const orgId = organizationId;
 
+    await assertDepartmentInOrg(ctx, fields.departmentId, orgId);
+
     return await ctx.db.insert("surveys", {
       ...fields,
       organizationId: orgId,
@@ -73,6 +77,7 @@ export const update = mutation({
     }
 
     assertSameOrg(survey.organizationId, orgId, "Survey");
+    await assertDepartmentInOrg(ctx, fields.departmentId, orgId);
 
     await ctx.db.patch(surveyId, fields);
   },

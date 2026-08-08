@@ -197,7 +197,10 @@ function renderPopup(announcement: Announcement, onDismiss: () => void): HTMLEle
   return backdrop;
 }
 
-export function createAnnouncementsController(organizationId: string) {
+export function createAnnouncementsController(
+  organizationId: string,
+  departmentId?: string | null,
+) {
   const mounted: HTMLElement[] = [];
 
   function mount(announcement: Announcement) {
@@ -225,7 +228,12 @@ export function createAnnouncementsController(organizationId: string) {
     }
 
     try {
-      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/announcements?organizationId=${encodeURIComponent(organizationId)}`;
+      const params = new URLSearchParams({ organizationId });
+      if (departmentId) {
+        params.set('departmentId', departmentId);
+      }
+
+      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/announcements?${params.toString()}`;
       const response = await fetch(url);
 
       if (!response.ok) {

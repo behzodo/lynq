@@ -2,6 +2,7 @@
 
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import {
+  Building2Icon,
   ClipboardListIcon,
   InboxIcon,
   LayoutDashboardIcon,
@@ -42,6 +43,11 @@ const customerSupportItems = [
 ];
 
 const configurationItems = [
+  {
+    title: "Departments",
+    url: "/departments",
+    icon: Building2Icon,
+  },
   {
     title: "Announcements",
     url: "/announcements",

@@ -7,6 +7,8 @@ import { mutation, query } from "../_generated/server";
 export const getActive = query({
   args: {
     organizationId: v.string(),
+    // A plain string on purpose - see the note in public/announcements.ts
+    departmentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const surveys = await ctx.db
@@ -16,7 +18,14 @@ export const getActive = query({
       )
       .collect();
 
-    return surveys.map((survey) => ({
+    // Surveys with no departmentId belong to the whole organization
+    const visible = surveys.filter(
+      (survey) =>
+        survey.departmentId === undefined ||
+        survey.departmentId === args.departmentId,
+    );
+
+    return visible.map((survey) => ({
       id: survey._id,
       title: survey.title,
       question: survey.question,

@@ -43,6 +43,11 @@ import {
   surveySchema,
 } from "../../schemas";
 import { SurveyPreview } from "./survey-preview";
+import { DepartmentField } from "@/modules/departments/ui/components/department-field";
+import {
+  toDepartmentArg,
+  toDepartmentField,
+} from "@/modules/departments/constants";
 
 interface Props {
   open: boolean;
@@ -68,6 +73,7 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
     form.reset(
       survey
         ? {
+            departmentId: toDepartmentField(survey.departmentId),
             title: survey.title,
             question: survey.question,
             type: survey.type,
@@ -86,12 +92,18 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
   const values = form.watch();
 
   const onSubmit = async (data: SurveyFormSchema) => {
+    // "all" is a form-only sentinel - Convex wants the field absent
+    const payload = {
+      ...data,
+      departmentId: toDepartmentArg(data.departmentId),
+    };
+
     try {
       if (survey) {
-        await update({ surveyId: survey._id, ...data });
+        await update({ surveyId: survey._id, ...payload });
         toast.success("Survey updated");
       } else {
-        await create(data);
+        await create(payload);
         toast.success("Survey created");
       }
 
@@ -119,6 +131,12 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
 
         <Form {...form}>
           <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+            <DepartmentField
+              control={form.control}
+              description="Only pages whose snippet names this department will show it"
+              name="departmentId"
+            />
+
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}

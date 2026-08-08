@@ -2,23 +2,15 @@
 
 import { useOrganization } from "@clerk/nextjs";
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@workspace/ui/components/tabs";
 import { Separator } from "@workspace/ui/components/separator";
-import Image from "next/image";
-import { INTEGRATIONS, IntegrationId } from "../../constants";
-import { createScript } from "../../utils";
-import { CodeBlock } from "../components/code-block";
+import Link from "next/link";
 import {
   Callout,
   CopyField,
   DocsSection,
   Step,
 } from "../components/docs-primitives";
+import { SnippetTabs } from "../components/snippet-tabs";
 import { GithubPanel } from "../components/github-panel";
 import { McpPanel } from "../components/mcp-panel";
 import { TelegramPanel } from "@/modules/telegram/ui/components/telegram-panel";
@@ -101,49 +93,16 @@ export const IntegrationsView = () => {
             id="install"
             title="Install the widget"
           >
-            <Tabs className="w-full" defaultValue={INTEGRATIONS[0]?.id}>
-              <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-                {INTEGRATIONS.map((integration) => (
-                  <TabsTrigger
-                    className="gap-2 rounded-lg border bg-background px-3 py-2 data-[state=active]:border-primary/40 data-[state=active]:bg-primary/5 data-[state=active]:shadow-none"
-                    key={integration.id}
-                    value={integration.id}
-                  >
-                    <Image
-                      alt=""
-                      className="size-4"
-                      height={16}
-                      src={integration.icon}
-                      width={16}
-                    />
-                    {integration.title}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <SnippetTabs organizationId={organizationId} />
 
-              {INTEGRATIONS.map((integration) => (
-                <TabsContent
-                  className="mt-5 space-y-4"
-                  key={integration.id}
-                  value={integration.id}
-                >
-                  <CodeBlock
-                    code={
-                      organizationId
-                        ? createScript(
-                            integration.id as IntegrationId,
-                            organizationId,
-                          )
-                        : "// Loading your organization…"
-                    }
-                    label={FILENAME_BY_INTEGRATION[integration.id] ?? "Code"}
-                  />
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {PLACEMENT_BY_INTEGRATION[integration.id]}
-                  </p>
-                </TabsContent>
-              ))}
-            </Tabs>
+            <Callout>
+              Running more than one product from this organization? The{" "}
+              <Link className="underline" href="/departments">
+                Departments
+              </Link>{" "}
+              page gives each one its own snippet, so a banner meant for one
+              never shows on the others.
+            </Callout>
           </DocsSection>
 
           <Separator />

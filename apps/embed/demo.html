@@ -76,15 +76,22 @@
     <p>This page demonstrates how to embed the Echo support widget on your website.</p>
     
     <h2>Basic Usage</h2>
-    <pre><code>&lt;script src="https://lynq-embed.vercel.app/widget.js" 
-        data-organization-id="<span id="example-org-id">org_3HbkcpndIIAwjhcJRbxer79UXWB</span>"&gt;
+    <pre><code>&lt;script src="https://lynq-embed.vercel.app/widget.js"
+        data-organization-id="<span id="example-org-id"></span>"
+        data-department-id="<span id="example-department-id">optional</span>"&gt;
 &lt;/script&gt;</code></pre>
-    
+
     <div class="config-form">
       <h3>Configuration</h3>
       <div class="form-group">
         <label for="orgId">Organization ID:</label>
         <input type="text" id="orgId" placeholder="Enter your organization ID" value="">
+      </div>
+      <div class="form-group">
+        <label for="departmentId">Department ID:</label>
+        <input type="text" id="departmentId" placeholder="Leave empty to act as a page with no department">
+        <small>Copy one from the Departments page in the dashboard. Empty means
+        this page only sees organization-wide announcements and surveys.</small>
       </div>
       <div class="form-group">
         <label for="position">Position:</label>
@@ -94,12 +101,13 @@
         </select>
       </div>
     </div>
-    
+
     <div class="controls">
       <button onclick="initWidget()">Initialize Widget</button>
       <button onclick="showWidget()">Show Widget</button>
       <button onclick="hideWidget()">Hide Widget</button>
       <button onclick="destroyWidget()">Destroy Widget</button>
+      <button onclick="resetSeen()">Reset dismissed / answered</button>
     </div>
   </div>
   
@@ -107,22 +115,49 @@
   <script type="module" src="/embed.ts" data-organization-id="org_3HbkcpndIIAwjhcJRbxer79UXWB"></script>
   
   <script type="module">
-    import { EMBED_CONFIG } from './config.ts';
-    
-    // Set display values on load
-    document.getElementById('example-org-id').textContent = EMBED_CONFIG.DEFAULT_ORG_ID;
-    document.getElementById('orgId').value = EMBED_CONFIG.DEFAULT_ORG_ID;
-    
+    // Read the org id straight off the script tag above, so the form and the
+    // sample snippet can never drift from what actually loaded.
+    const bootScript = document.querySelector('script[data-organization-id]');
+    const DEFAULT_ORG_ID = bootScript?.getAttribute('data-organization-id') ?? '';
+
+    document.getElementById('example-org-id').textContent = DEFAULT_ORG_ID;
+    document.getElementById('orgId').value = DEFAULT_ORG_ID;
+
+    const departmentInput = document.getElementById('departmentId');
+    departmentInput.addEventListener('input', () => {
+      document.getElementById('example-department-id').textContent =
+        departmentInput.value || 'optional';
+    });
+
     window.initWidget = function() {
       const config = {
-        organizationId: document.getElementById('orgId').value || EMBED_CONFIG.DEFAULT_ORG_ID,
+        organizationId: document.getElementById('orgId').value || DEFAULT_ORG_ID,
+        // Empty string means "no department", which reinit takes as null
+        departmentId: departmentInput.value.trim() || null,
         position: document.getElementById('position').value
       };
-      
+
       if (window.EchoWidget) {
         window.EchoWidget.init(config);
         console.log('Widget reinitialized with config:', config);
       }
+    }
+
+    // Banners remember dismissal and surveys remember answers, per visitor.
+    // Without this you only ever see each one once while testing.
+    window.resetSeen = function() {
+      const prefixes = ['echo_announcement_dismissed_', 'echo_survey_answered_'];
+      let cleared = 0;
+
+      for (const key of Object.keys(localStorage)) {
+        if (prefixes.some((prefix) => key.startsWith(prefix))) {
+          localStorage.removeItem(key);
+          cleared++;
+        }
+      }
+
+      console.log(`Cleared ${cleared} dismissed/answered records`);
+      window.initWidget();
     }
     
     window.showWidget = function() {
