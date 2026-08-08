@@ -158,6 +158,43 @@ export async function getInstallationToken(
   return body.token;
 }
 
+/**
+ * The install redirect does not reliably carry the account, so it is read back
+ * from the installation itself. Uses the app JWT, not an installation token.
+ */
+export async function getInstallationAccount(
+  installationId: number,
+): Promise<{ login: string; type: string }> {
+  const jwt = await createAppJwt();
+
+  const response = await fetch(
+    `${GITHUB_API}/app/installations/${installationId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Could not read installation ${installationId} (${response.status})`,
+    );
+  }
+
+  const body = (await response.json()) as {
+    account?: { login?: string; type?: string };
+  };
+
+  return {
+    login: body.account?.login ?? "",
+    // "User" installations cannot reach Projects v2 with an installation token
+    type: body.account?.type ?? "",
+  };
+}
+
 async function rest<T>(
   token: string,
   path: string,

@@ -37,6 +37,9 @@ type Targets = {
     statusFieldId?: string;
     statusOptions: { id: string; name: string }[];
   }[];
+  accountLogin: string;
+  accountType: string;
+  supportsProjects: boolean;
 };
 
 export const GithubPanel = () => {
@@ -232,26 +235,43 @@ export const GithubPanel = () => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Project board (optional)</Label>
-            <Select onValueChange={setProjectNodeId} value={projectNodeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="No board — just create issues" />
-              </SelectTrigger>
-              <SelectContent>
-                {targets.projects.map((project) => (
-                  <SelectItem key={project.nodeId} value={project.nodeId}>
-                    {project.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {targets.projects.length === 0 && (
-              <p className="text-muted-foreground text-xs">
-                No Projects v2 boards found. Create one on GitHub, then refresh.
+          {targets.supportsProjects ? (
+            <div className="space-y-2">
+              <Label>Project board (optional)</Label>
+              <Select onValueChange={setProjectNodeId} value={projectNodeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No board — just create issues" />
+                </SelectTrigger>
+                <SelectContent>
+                  {targets.projects.map((project) => (
+                    <SelectItem key={project.nodeId} value={project.nodeId}>
+                      {project.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {targets.projects.length === 0 && (
+                <p className="text-muted-foreground text-xs">
+                  No Projects v2 boards found. Create one on GitHub, then
+                  refresh.
+                </p>
+              )}
+            </div>
+          ) : (
+            <Callout title="Board sync needs a GitHub organization">
+              <p>
+                <strong>{targets.accountLogin}</strong> is a personal account.
+                GitHub only exposes the Projects permission for organizations, so
+                an app cannot place cards on a personal board — that is a GitHub
+                restriction, not a Lynq one.
               </p>
-            )}
-          </div>
+              <p className="mt-1.5">
+                Issues still work fully. To get board sync, create a free
+                organization, move the repository into it, and install the app
+                there.
+              </p>
+            </Callout>
+          )}
 
           {selectedProject && selectedProject.statusOptions.length > 0 && (
             <div className="space-y-2">

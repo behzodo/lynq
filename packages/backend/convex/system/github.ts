@@ -5,6 +5,7 @@ import {
   addIssueToProject,
   commentOnIssue,
   createIssue,
+  getInstallationAccount,
   getInstallationToken,
   listInstallationRepos,
   listProjects,
@@ -35,18 +36,53 @@ export const getInstallationByInstallationId = internalQuery({
   },
 });
 
+export const setAccountLogin = internalMutation({
+  args: { installationId: v.number(), accountLogin: v.string() },
+  handler: async (ctx, args) => {
+    const installation = await ctx.db
+      .query("githubInstallations")
+      .withIndex("by_installation_id", (q) =>
+        q.eq("installationId", args.installationId),
+      )
+      .unique();
+
+    if (installation && installation.accountLogin !== args.accountLogin) {
+      await ctx.db.patch(installation._id, { accountLogin: args.accountLogin });
+    }
+  },
+});
+
 /** Repos and boards the installation can see, for the settings screen. */
 export const listTargets = internalAction({
-  args: { installationId: v.number(), accountLogin: v.string() },
-  handler: async (_ctx, args) => {
+  args: { installationId: v.number() },
+  handler: async (ctx, args) => {
+    // Read the owner from GitHub rather than the install redirect, which does
+    // not reliably include it
+    const account = await getInstallationAccount(args.installationId);
+
+    await ctx.runMutation(internal.system.github.setAccountLogin, {
+      installationId: args.installationId,
+      accountLogin: account.login,
+    });
+
     const token = await getInstallationToken(args.installationId);
 
-    const [repos, projects] = await Promise.all([
-      listInstallationRepos(token),
-      listProjects(token, args.accountLogin),
-    ]);
+    const repos = await listInstallationRepos(token);
 
-    return { repos, projects };
+    // Projects v2 is only reachable for organization installations - the
+    // Projects permission does not exist for user accounts
+    const projects =
+      account.type === "Organization"
+        ? await listProjects(token, account.login)
+        : [];
+
+    return {
+      repos,
+      projects,
+      accountLogin: account.login,
+      accountType: account.type,
+      supportsProjects: account.type === "Organization",
+    };
   },
 });
 

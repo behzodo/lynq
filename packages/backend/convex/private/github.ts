@@ -111,6 +111,9 @@ export const listTargets = action({
       statusFieldId?: string;
       statusOptions: { id: string; name: string }[];
     }[];
+    accountLogin: string;
+    accountType: string;
+    supportsProjects: boolean;
   }> => {
     const orgId = await requireOrgId(ctx);
 
@@ -128,7 +131,6 @@ export const listTargets = action({
 
     return await ctx.runAction(internal.system.github.listTargets, {
       installationId: installation.installationId,
-      accountLogin: installation.accountLogin,
     });
   },
 });
