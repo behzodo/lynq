@@ -63,7 +63,11 @@ export function clearCredentials() {
 function openBrowser(url: string) {
   const command =
     process.platform === "win32"
-      ? { cmd: "cmd", args: ["/c", "start", "", url] }
+      ? // NOT `cmd /c start`: cmd.exe treats & as a command separator, so the
+        // query string is truncated at the first parameter and the browser
+        // receives a URL with no client_id. rundll32 takes the URL as a single
+        // argument with no shell parsing in between.
+        { cmd: "rundll32", args: ["url.dll,FileProtocolHandler", url] }
       : process.platform === "darwin"
         ? { cmd: "open", args: [url] }
         : { cmd: "xdg-open", args: [url] };
