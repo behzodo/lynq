@@ -15,11 +15,13 @@ const isMcpRoute = createRouteMatcher([
 ]);
 
 const isPublicRoute = createRouteMatcher([
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
 ]);
 
 const isOrgFreeRoute = createRouteMatcher([
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/org-selection(.*)"

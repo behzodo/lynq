@@ -3,15 +3,12 @@ import {withSentryConfig} from "@sentry/nextjs";
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
   devIndicators: false,
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/conversations",
-        permanent: false,
-      },
-    ]
-  }
+  images: {
+    remotePatterns: [
+      // The landing hero art is hosted on Unsplash.
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
+  },
 }
 
 export default withSentryConfig(nextConfig, {
