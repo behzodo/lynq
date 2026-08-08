@@ -55,7 +55,8 @@ export const getMany = query({
       .order("desc")
       .collect();
 
-    // Response counts drive the list UI, so fetch them alongside
+    // The list shows headline numbers per survey, and the responses are
+    // already loaded to count them, so summarise them in the same pass.
     return await Promise.all(
       surveys.map(async (survey) => {
         const responses = await ctx.db
@@ -63,7 +64,35 @@ export const getMany = query({
           .withIndex("by_survey_id", (q) => q.eq("surveyId", survey._id))
           .collect();
 
-        return { ...survey, responseCount: responses.length };
+        const scores = responses
+          .map((response) => response.score)
+          .filter((score): score is number => typeof score === "number");
+
+        const average =
+          scores.length > 0
+            ? scores.reduce((total, score) => total + score, 0) / scores.length
+            : null;
+
+        let nps: number | null = null;
+        if (survey.type === "nps" && scores.length > 0) {
+          const promoters = scores.filter((score) => score >= 9).length;
+          const detractors = scores.filter((score) => score <= 6).length;
+          nps = Math.round(((promoters - detractors) / scores.length) * 100);
+        }
+
+        const lastResponseAt = responses.reduce(
+          (latest, response) => Math.max(latest, response._creationTime),
+          0,
+        );
+
+        return {
+          ...survey,
+          responseCount: responses.length,
+          commentCount: responses.filter((response) => response.comment).length,
+          average,
+          nps,
+          lastResponseAt: lastResponseAt || null,
+        };
       }),
     );
   },

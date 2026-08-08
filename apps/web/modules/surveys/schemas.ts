@@ -1,4 +1,14 @@
 import { z } from "zod";
+import { Doc } from "@workspace/backend/_generated/dataModel";
+
+/** A survey plus the response summary the list view renders. */
+export type SurveyRow = Doc<"surveys"> & {
+  responseCount: number;
+  commentCount: number;
+  average: number | null;
+  nps: number | null;
+  lastResponseAt: number | null;
+};
 
 export const surveySchema = z.object({
   title: z.string().min(1, "Title is required"),
