@@ -7,9 +7,8 @@ import { CustomizationForm } from "../components/customization-form";
 
 export const CustomizationView = () => {
   const widgetSettings = useQuery(api.private.widgetSettings.getOne);
-  const vapiPlugin = useQuery(api.private.plugins.getOne, { service: "vapi" });
 
-  const isLoading = widgetSettings === undefined || vapiPlugin === undefined;
+  const isLoading = widgetSettings === undefined;
 
   if (isLoading) {
     return (
@@ -31,10 +30,7 @@ export const CustomizationView = () => {
         </div>
 
         <div className="mt-8">
-          <CustomizationForm
-            initialData={widgetSettings}
-            hasVapiPlugin={!!vapiPlugin}
-          />
+          <CustomizationForm initialData={widgetSettings} />
         </div>
       </div>
     </div>

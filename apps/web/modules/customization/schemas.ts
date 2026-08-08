@@ -7,8 +7,6 @@ export const widgetSettingsSchema = z.object({
     suggestion2: z.string().optional(),
     suggestion3: z.string().optional(),
   }),
-  vapiSettings: z.object({
-    assistantId: z.string().optional(),
-    phoneNumber: z.string().optional(),
-  }),
+  // Convex storage id for the uploaded brand logo, empty when none is set
+  logoStorageId: z.string().optional(),
 });

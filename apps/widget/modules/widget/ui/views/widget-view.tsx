@@ -8,8 +8,9 @@ import { WidgetLoadingScreen } from "@/modules/widget/ui/screens/widget-loading-
 import { WidgetSelectionScreen } from "@/modules/widget/ui/screens/widget-selection-screen";
 import { WidgetChatScreen } from "@/modules/widget/ui/screens/widget-chat-screen";
 import { WidgetInboxScreen } from "../screens/widget-inbox-screen";
-import { WidgetVoiceScreen } from "../screens/widget-voice-screen";
-import { WidgetContactScreen } from "../screens/widget-contact-screen";
+import { WidgetTicketFormScreen } from "../screens/widget-ticket-form-screen";
+import { WidgetTicketsScreen } from "../screens/widget-tickets-screen";
+import { WidgetTicketScreen } from "../screens/widget-ticket-screen";
 
 interface Props {
   organizationId: string | null;
@@ -22,11 +23,12 @@ export const WidgetView = ({ organizationId }: Props) => {
     loading: <WidgetLoadingScreen organizationId={organizationId} />,
     error: <WidgetErrorScreen />,
     auth: <WidgetAuthScreen />,
-    voice: <WidgetVoiceScreen />,
     inbox: <WidgetInboxScreen />,
     selection: <WidgetSelectionScreen />,
     chat: <WidgetChatScreen />,
-    contact: <WidgetContactScreen />,
+    "ticket-form": <WidgetTicketFormScreen />,
+    tickets: <WidgetTicketsScreen />,
+    ticket: <WidgetTicketScreen />,
   }
 
   return (

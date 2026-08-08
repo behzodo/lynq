@@ -8,12 +8,16 @@ import { useThreadMessages, toUIMessages } from "@convex-dev/agent/react";
 import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { Button } from "@workspace/ui/components/button";
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArrowLeftIcon, MenuIcon } from "lucide-react";
+import { ArrowLeftIcon, ImagePlusIcon, Loader2Icon, MenuIcon, XIcon } from "lucide-react";
 import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
 import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
+import {
+  useCountIncrease,
+  useNotificationSound,
+} from "@workspace/ui/hooks/use-notification-sound";
 import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
 import { contactSessionIdAtomFamily, conversationIdAtom, organizationIdAtom, screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
 import { Form, FormField } from "@workspace/ui/components/form";
 import {
@@ -33,11 +37,15 @@ import {
   AIMessageContent,
 } from "@workspace/ui/components/ai/message";
 import { AIResponse } from "@workspace/ui/components/ai/response";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Id } from "@workspace/backend/_generated/dataModel";
 
 const formSchema = z.object({
-  message: z.string().min(1, "Message is required"),
+  message: z.string(),
 });
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export const WidgetChatScreen = () => {
   const setScreen = useSetAtom(screenAtom);
@@ -94,6 +102,14 @@ export const WidgetChatScreen = () => {
     loadSize: 10,
   });
 
+  // Chime when the assistant or a human operator answers
+  const { play } = useNotificationSound();
+  useCountIncrease(
+    messages.results?.filter((message) => message.message?.role !== "user")
+      .length,
+    () => play("incoming"),
+  );
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -101,18 +117,104 @@ export const WidgetChatScreen = () => {
     },
   });
 
-  const createMessage = useAction(api.public.messages.create);
+  const createMessage = useMutation(api.public.messages.create);
+  const generateUploadUrl = useMutation(api.public.messages.generateUploadUrl);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [attachment, setAttachment] = useState<{
+    storageId: Id<"_storage">;
+    previewUrl: string;
+    name: string;
+  } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const isResolved = conversation?.status === "resolved";
+
+  const handleImageSelected = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    // Allows re-picking the same file after an error
+    event.target.value = "";
+
+    if (!file || !contactSessionId) {
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setUploadError("Only PNG, JPG, WEBP or GIF images");
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setUploadError("Image must be smaller than 5MB");
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const uploadUrl = await generateUploadUrl({ contactSessionId });
+
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) {
+        throw new Error(`Upload failed with status ${result.status}`);
+      }
+
+      const { storageId } = (await result.json()) as {
+        storageId: Id<"_storage">;
+      };
+
+      setAttachment({
+        storageId,
+        previewUrl: URL.createObjectURL(file),
+        name: file.name,
+      });
+    } catch (error) {
+      console.error(error);
+      setUploadError("Could not upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const clearAttachment = () => {
+    if (attachment) {
+      URL.revokeObjectURL(attachment.previewUrl);
+    }
+
+    setAttachment(null);
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!conversation || !contactSessionId) {
       return;
     }
 
+    // Either text or an image is enough to send
+    if (!values.message.trim() && !attachment) {
+      return;
+    }
+
+    const imageStorageId = attachment?.storageId;
+
     form.reset();
+    clearAttachment();
+    play("outgoing");
 
     await createMessage({
       threadId: conversation.threadId,
       prompt: values.message,
       contactSessionId,
+      imageStorageId,
     });
   };
 
@@ -194,13 +296,48 @@ export const WidgetChatScreen = () => {
             className="rounded-none border-x-0 border-b-0"
             onSubmit={form.handleSubmit(onSubmit)}
           >
+            {(attachment || isUploading || uploadError) && (
+              <div className="flex items-center gap-x-2 px-3 pt-3">
+                {attachment && (
+                  <div className="relative">
+                    {/* Local object URL preview */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      alt={attachment.name}
+                      className="size-14 rounded-lg border object-cover"
+                      src={attachment.previewUrl}
+                    />
+                    <button
+                      aria-label="Remove image"
+                      className="-right-1.5 -top-1.5 absolute flex size-5 items-center justify-center rounded-full bg-foreground text-background shadow-sm"
+                      onClick={clearAttachment}
+                      type="button"
+                    >
+                      <XIcon className="size-3" />
+                    </button>
+                  </div>
+                )}
+
+                {isUploading && (
+                  <span className="flex items-center gap-x-2 text-muted-foreground text-xs">
+                    <Loader2Icon className="size-3 animate-spin" />
+                    Uploading…
+                  </span>
+                )}
+
+                {uploadError && (
+                  <span className="text-destructive text-xs">{uploadError}</span>
+                )}
+              </div>
+            )}
+
             <FormField
               control={form.control}
-              disabled={conversation?.status === "resolved"}
+              disabled={isResolved}
               name="message"
               render={({ field }) => (
                 <AIInputTextarea
-                  disabled={conversation?.status === "resolved"}
+                  disabled={isResolved}
                   onChange={field.onChange}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -209,7 +346,7 @@ export const WidgetChatScreen = () => {
                     }
                   }}
                   placeholder={
-                    conversation?.status === "resolved"
+                    isResolved
                       ? "This conversation has been resolved."
                       : "Type your message..."
                   }
@@ -218,9 +355,36 @@ export const WidgetChatScreen = () => {
               )}
             />
             <AIInputToolbar>
-              <AIInputTools />
+              <AIInputTools>
+                <Button
+                  aria-label="Attach image"
+                  className="size-9 shrink-0 text-muted-foreground"
+                  disabled={isResolved || isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  {isUploading ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : (
+                    <ImagePlusIcon />
+                  )}
+                </Button>
+                <input
+                  accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                  className="hidden"
+                  onChange={handleImageSelected}
+                  ref={fileInputRef}
+                  type="file"
+                />
+              </AIInputTools>
               <AIInputSubmit
-                disabled={conversation?.status === "resolved" || !form.formState.isValid}
+                disabled={
+                  isResolved ||
+                  isUploading ||
+                  (!form.watch("message").trim() && !attachment)
+                }
                 status="ready"
                 type="submit"
               />

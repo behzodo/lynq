@@ -12,10 +12,9 @@ export const contactSessionIdAtomFamily = atomFamily((organizationId: string) =>
 export const errorMessageAtom = atom<string | null>(null);
 export const loadingMessageAtom = atom<string | null>(null);
 export const conversationIdAtom = atom<Id<"conversations"> | null>(null);
+export const ticketIdAtom = atom<Id<"tickets"> | null>(null);
 
-export const widgetSettingsAtom = atom<Doc<"widgetSettings"> | null>(null);
-export const vapiSecretsAtom = atom<{
-  publicApiKey: string;
-} | null>(null);
-export const hasVapiSecretsAtom = atom((get) => get(vapiSecretsAtom) !== null);
+// The public query resolves the stored logo into a served URL
+export type WidgetSettings = Doc<"widgetSettings"> & { logoUrl: string | null };
 
+export const widgetSettingsAtom = atom<WidgetSettings | null>(null);

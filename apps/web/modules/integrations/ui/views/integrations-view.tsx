@@ -18,6 +18,7 @@ import {
 } from "@workspace/ui/components/dialog";
 import { useState } from "react";
 import { createScript } from "../../utils";
+import { TelegramPanel } from "@/modules/telegram/ui/components/telegram-panel";
 
 export const IntegrationsView = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -108,6 +109,17 @@ export const IntegrationsView = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <Separator className="my-8" />
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <Label className="text-lg">Messaging apps</Label>
+              <p className="text-muted-foreground text-sm">
+                Answer customers where they already are, using the same AI agent.
+              </p>
+            </div>
+            <TelegramPanel />
           </div>
         </div>
       </div>

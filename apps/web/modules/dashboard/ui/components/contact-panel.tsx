@@ -13,10 +13,23 @@ import { Id } from "@workspace/backend/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
 import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
 import { useQuery } from "convex/react";
-import { ClockIcon, GlobeIcon, MailIcon, MonitorIcon } from "lucide-react";
+import {
+  ClockIcon,
+  GlobeIcon,
+  MailIcon,
+  MonitorIcon,
+  SendIcon,
+  TicketPlusIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { CreateTicketDialog } from "@/modules/tickets/ui/components/create-ticket-dialog";
+import {
+  TICKET_STATUS_CLASSES,
+  TICKET_STATUS_LABELS,
+} from "@/modules/tickets/constants";
+import { Badge } from "@workspace/ui/components/badge";
 
 type InfoItem = {
   label: string;
@@ -35,11 +48,23 @@ export const ContactPanel = () => {
   const params = useParams();
   const conversationId = params.conversationId as (Id<"conversations"> | null);
 
-  const contactSession = useQuery(api.private.contactSessions.getOneByConversationId, 
+  const contactSession = useQuery(api.private.contactSessions.getOneByConversationId,
     conversationId ? {
       conversationId,
     } : "skip",
   );
+
+  const relatedTickets = useQuery(
+    api.private.tickets.getByConversationId,
+    conversationId ? { conversationId } : "skip",
+  );
+
+  const telegram = useQuery(
+    api.private.telegram.getProfileByConversationId,
+    conversationId ? { conversationId } : "skip",
+  );
+
+  const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
 
   const parseUserAgent = useMemo(() => {
     return (userAgent?: string) => {
@@ -169,6 +194,38 @@ export const ContactPanel = () => {
     ];
   }, [contactSession, userAgentInfo, countryInfo]);
 
+  // Telegram contacts carry identity the browser can never give us
+  const telegramSection = useMemo<InfoSection | null>(() => {
+    if (!telegram) {
+      return null;
+    }
+
+    const { profile, chatId } = telegram;
+
+    const items: InfoItem[] = [
+      { label: "Name", value: [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "—" },
+      {
+        label: "Username",
+        value: profile.username ? `@${profile.username}` : "—",
+      },
+      { label: "Phone", value: profile.phone || "—" },
+      { label: "Email", value: profile.email || "—" },
+      { label: "Language", value: profile.languageCode || "—" },
+      { label: "Telegram ID", value: profile.telegramUserId || chatId },
+    ];
+
+    return {
+      id: "telegram",
+      icon: SendIcon,
+      title: "Telegram profile",
+      items,
+    };
+  }, [telegram]);
+
+  const sections = telegramSection
+    ? [telegramSection, ...accordionSections]
+    : accordionSections;
+
   if (contactSession === undefined || contactSession === null) {
     return null;
   }
@@ -203,16 +260,61 @@ export const ContactPanel = () => {
             <span>Send Email</span>
           </Link>
         </Button>
+
+        <Button
+          className="w-full"
+          onClick={() => setIsTicketDialogOpen(true)}
+          size="lg"
+          variant="outline"
+        >
+          <TicketPlusIcon />
+          <span>Create Ticket</span>
+        </Button>
+
+        {relatedTickets && relatedTickets.length > 0 && (
+          <div className="w-full space-y-1.5">
+            <p className="text-muted-foreground text-xs">
+              Tickets from this contact
+            </p>
+            {relatedTickets.map((ticket) => (
+              <Link
+                className="flex items-center gap-2 rounded-md border px-2.5 py-2 transition-colors hover:border-primary/40"
+                href={`/tickets/${ticket._id}`}
+                key={ticket._id}
+              >
+                <span className="shrink-0 font-medium text-muted-foreground text-xs">
+                  #{ticket.number}
+                </span>
+                <span className="line-clamp-1 flex-1 text-sm">
+                  {ticket.subject}
+                </span>
+                <Badge className={TICKET_STATUS_CLASSES[ticket.status]}>
+                  {TICKET_STATUS_LABELS[ticket.status]}
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
+      {conversationId && (
+        <CreateTicketDialog
+          contactEmail={contactSession.email}
+          contactName={contactSession.name}
+          conversationId={conversationId}
+          onOpenChange={setIsTicketDialogOpen}
+          open={isTicketDialogOpen}
+        />
+      )}
+
       <div>
-        {contactSession.metadata && (
+        {sections.length > 0 && (
           <Accordion
             className="w-full rounded-none border-y"
             collapsible
             type="single"
           >
-            {accordionSections.map((section) => (
+            {sections.map((section) => (
               <AccordionItem
                 className="rounded-none outline-none has-focus-visible:z-10 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
                 key={section.id}

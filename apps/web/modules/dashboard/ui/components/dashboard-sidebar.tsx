@@ -2,12 +2,12 @@
 
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import {
-  CreditCardIcon,
+  ClipboardListIcon,
   InboxIcon,
   LayoutDashboardIcon,
-  LibraryBigIcon,
-  Mic,
+  MegaphoneIcon,
   PaletteIcon,
+  TicketIcon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,6 +26,7 @@ import {
   SidebarRail,
 } from "@workspace/ui/components/sidebar";
 import { cn } from "@workspace/ui/lib/utils";
+import { SoundToggle } from "./sound-toggle";
 
 const customerSupportItems = [
   {
@@ -34,35 +35,32 @@ const customerSupportItems = [
     icon: InboxIcon,
   },
   {
-    title: "Knowledge Base",
-    url: "/files",
-    icon: LibraryBigIcon,
+    title: "Tickets",
+    url: "/tickets",
+    icon: TicketIcon,
   },
 ];
 
 const configurationItems = [
+  {
+    title: "Announcements",
+    url: "/announcements",
+    icon: MegaphoneIcon,
+  },
+  {
+    title: "Surveys",
+    url: "/surveys",
+    icon: ClipboardListIcon,
+  },
   {
     title: "Widget Customization",
     url: "/customization",
     icon: PaletteIcon,
   },
   {
-    title: "Integrations",
+    title: "Setup & Integrations",
     url: "/integrations",
     icon: LayoutDashboardIcon,
-  },
-  {
-    title: "Voice Assistant",
-    url: "/plugins/vapi",
-    icon: Mic,
-  },
-];
-
-const accountItems = [
-  {
-    title: "Plans & Billing",
-    url: "/billing",
-    icon: CreditCardIcon,
   },
 ];
 
@@ -155,34 +153,10 @@ export const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Account */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className={cn(
-                      isActive(item.url) && "bg-gradient-to-b from-sidebar-primary to-[#0b63f3]! text-sidebar-primary-foreground! hover:to-[#0b63f3]/90!"
-                    )}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.url}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SoundToggle />
           <SidebarMenuItem>
             <UserButton
               showName

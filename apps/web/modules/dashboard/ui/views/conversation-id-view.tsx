@@ -6,8 +6,8 @@ import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react";
 import { api } from "@workspace/backend/_generated/api";
 import { Id } from "@workspace/backend/_generated/dataModel";
 import { Button } from "@workspace/ui/components/button";
-import { useAction, useMutation, useQuery } from "convex/react";
-import { MoreHorizontalIcon, Wand2Icon } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { MoreHorizontalIcon } from "lucide-react";
 import {
   AIConversation,
   AIConversationContent,
@@ -15,7 +15,6 @@ import {
 } from "@workspace/ui/components/ai/conversation";
 import {
   AIInput,
-  AIInputButton,
   AIInputSubmit,
   AIInputTextarea,
   AIInputToolbar,
@@ -35,7 +34,6 @@ import { ConversationStatusButton } from "../components/conversation-status-butt
 import { useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { toast } from "sonner";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -73,24 +71,6 @@ export const ConversationIdView = ({
       message: "",
     },
   });
-
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const enhanceResponse = useAction(api.private.messages.enhanceResponse);
-  const handleEnhanceResponse = async () => {
-    setIsEnhancing(true);
-    const currentValue = form.getValues("message");
-
-    try {
-      const response = await enhanceResponse({ prompt: currentValue });
-
-      form.setValue("message", response);
-    } catch (error) {
-      toast.error("Something went wrong");
-      console.error(error);
-    } finally {
-      setIsEnhancing(false);
-    }
-  }
 
   const createMessage = useMutation(api.private.messages.create);
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -201,8 +181,7 @@ export const ConversationIdView = ({
                 <AIInputTextarea
                   disabled={
                     conversation?.status === "resolved" ||
-                    form.formState.isSubmitting ||
-                    isEnhancing
+                    form.formState.isSubmitting
                   }
                   onChange={field.onChange}
                   onKeyDown={(e) => {
@@ -221,25 +200,12 @@ export const ConversationIdView = ({
               )}
             />
             <AIInputToolbar>
-              <AIInputTools>
-                <AIInputButton
-                  onClick={handleEnhanceResponse}
-                  disabled={
-                    conversation?.status === "resolved" || 
-                    isEnhancing || 
-                    !form.formState.isValid
-                  }
-                >
-                  <Wand2Icon />
-                  {isEnhancing ? "Enhancing..." : "Enhance"}
-                </AIInputButton>
-              </AIInputTools>
+              <AIInputTools />
               <AIInputSubmit
                 disabled={
                   conversation?.status === "resolved" ||
                   !form.formState.isValid ||
-                  form.formState.isSubmitting ||
-                  isEnhancing
+                  form.formState.isSubmitting
                 }
                 status="ready"
                 type="submit"

@@ -1,7 +1,6 @@
 import { mutation, query } from "../_generated/server";
 import { ConvexError, v } from "convex/values";
-import { supportAgent } from "../system/ai/agents/supportAgent";
-import { MessageDoc } from "@convex-dev/agent";
+import { listMessages, MessageDoc } from "../lib/threads";
 import { paginationOptsValidator, PaginationResult } from "convex/server";
 import { Doc } from "../_generated/dataModel";
 
@@ -173,7 +172,7 @@ export const getMany = query({
           return null;
         }
 
-        const messages = await supportAgent.listMessages(ctx, {
+        const messages = await listMessages(ctx, {
           threadId: conversation.threadId,
           paginationOpts: { numItems: 1, cursor: null },
         });
@@ -182,10 +181,19 @@ export const getMany = query({
           lastMessage = messages.page[0] ?? null;
         }
 
+        // Conversations started from the Telegram bot have a linked chat row
+        const telegramChat = await ctx.db
+          .query("telegramChats")
+          .withIndex("by_conversation_id", (q) =>
+            q.eq("conversationId", conversation._id),
+          )
+          .unique();
+
         return {
           ...conversation,
           lastMessage,
           contactSession,
+          isTelegram: telegramChat !== null,
         };
       })
     );

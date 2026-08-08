@@ -1,6 +1,10 @@
 "use client";
 
 import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
+import {
+  useCountIncrease,
+  useNotificationSound,
+} from "@workspace/ui/hooks/use-notification-sound";
 import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
 import { formatDistanceToNow } from "date-fns";
 import { getCountryFlagUrl, getCountryFromTimezone } from "@/lib/country-utils";
@@ -20,6 +24,7 @@ import { ListIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CornerUpLeftIcon } fr
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConversationStatusIcon } from "@workspace/ui/components/conversation-status-icon";
+import { TelegramIcon } from "@workspace/ui/components/telegram-icon";
 import { useAtomValue, useSetAtom } from "jotai/react";
 import { statusFilterAtom } from "../../atoms";
 import { Skeleton } from "@workspace/ui/components/skeleton";
@@ -54,6 +59,13 @@ export const ConversationsPanel = () => {
     loadMore: conversations.loadMore,
     loadSize: 10,
   });
+
+  // Chime when a new conversation lands in the list
+  const { play } = useNotificationSound();
+  useCountIncrease(
+    conversations.isLoading ? undefined : conversations.results.length,
+    () => play("incoming"),
+  );
 
   return (
     <div className="flex h-full w-full flex-col bg-background text-sidebar-foreground">
@@ -142,6 +154,12 @@ export const ConversationsPanel = () => {
                       <span className="truncate font-bold">
                         {conversation.contactSession.name}
                       </span>
+                      {conversation.isTelegram && (
+                        <>
+                          <TelegramIcon className="size-3.5 shrink-0 text-[#229ED9]" />
+                          <span className="sr-only">Started from Telegram</span>
+                        </>
+                      )}
                       <span className="ml-auto shrink-0 text-muted-foreground text-xs">
                         {formatDistanceToNow(conversation._creationTime)}
                       </span>

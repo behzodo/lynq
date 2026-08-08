@@ -42,6 +42,20 @@ const components: Options["components"] = {
       {children}
     </a>
   ),
+  // Chat attachments arrive as markdown images; cap them so a large upload
+  // can't blow out the message bubble
+  img: ({ className, alt, ...props }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      alt={alt ?? ""}
+      className={cn(
+        "my-1 max-h-64 w-auto max-w-full rounded-lg border object-contain",
+        className
+      )}
+      loading="lazy"
+      {...props}
+    />
+  ),
   h1: ({ children, className, ...props }) => (
     <h1
       className={cn("mt-6 mb-2 font-semibold text-3xl", className)}

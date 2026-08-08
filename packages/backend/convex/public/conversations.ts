@@ -1,8 +1,12 @@
 import { mutation, query } from "../_generated/server";
-import { components, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { ConvexError, v } from "convex/values";
-import { supportAgent } from "../system/ai/agents/supportAgent";
-import { MessageDoc, saveMessage } from "@convex-dev/agent";
+import {
+  createThread,
+  listMessages,
+  MessageDoc,
+  saveOperatorMessage,
+} from "../lib/threads";
 import { paginationOptsValidator } from "convex/server";
 
 export const getMany = query({
@@ -32,7 +36,7 @@ export const getMany = query({
       conversations.page.map(async (conversation) => {
         let lastMessage: MessageDoc | null = null;
 
-        const messages = await supportAgent.listMessages(ctx, {
+        const messages = await listMessages(ctx, {
           threadId: conversation.threadId,
           paginationOpts: { numItems: 1, cursor: null },
         });
@@ -125,16 +129,14 @@ export const create = mutation({
       )
       .unique();
 
-    const { threadId } = await supportAgent.createThread(ctx, {
+    const threadId = await createThread(ctx, {
       userId: args.organizationId,
     });
 
-    await saveMessage(ctx, components.agent, {
+    await saveOperatorMessage(ctx, {
       threadId,
-      message: {
-        role: "assistant",
-        content: widgetSettings?.greetMessage || "Hello, how can I help you today?",
-      },
+      content:
+        widgetSettings?.greetMessage || "Hello, how can I help you today?",
     });
 
     const conversationId = await ctx.db.insert("conversations", {

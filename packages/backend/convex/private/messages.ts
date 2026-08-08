@@ -1,67 +1,8 @@
 import { ConvexError, v } from "convex/values";
-import { generateText } from "ai";
-import { action, mutation, query } from "../_generated/server";
-import { components, internal } from "../_generated/api";
-import { supportAgent } from "../system/ai/agents/supportAgent";
+import { mutation, query } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { paginationOptsValidator } from "convex/server";
-import { saveMessage } from "@convex-dev/agent";
-import { openai } from "@ai-sdk/openai";
-import { OPERATOR_MESSAGE_ENHANCEMENT_PROMPT } from "../system/ai/constants";
-
-export const enhanceResponse = action({
-  args: {
-    prompt: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (identity === null) {
-      throw new ConvexError({
-        code: "UNAUTHORIZED",
-        message: "Identity not found",
-      });
-    }
-
-    const orgId = identity.orgId as string;
-
-    if (!orgId) {
-      throw new ConvexError({
-        code: "UNAUTHORIZED",
-        message: "Organization not found",
-      });
-    }
-
-    const subscription = await ctx.runQuery(
-      internal.system.subscriptions.getByOrganizationId,
-      {
-        organizationId: orgId,
-      },
-    );
-
-    if (subscription?.status !== "active") {
-      throw new ConvexError({
-        code: "BAD_REQUEST",
-        message: "Missing subscription"
-      });
-    }
-
-    const response = await generateText({
-      model: openai("gpt-4o-mini"),
-      messages: [
-        {
-          role: "system",
-          content: OPERATOR_MESSAGE_ENHANCEMENT_PROMPT,
-        },
-        {
-          role: "user",
-          content: args.prompt,
-        },
-      ],
-    });
-
-    return response.text;
-  },
-});
+import { listMessages, saveOperatorMessage } from "../lib/threads";
 
 export const create = mutation({
   args: {
@@ -116,15 +57,22 @@ export const create = mutation({
       });
     }
 
-    await saveMessage(ctx, components.agent, {
+    await saveOperatorMessage(ctx, {
       threadId: conversation.threadId,
-      // TODO: Check if "agentName" is needed or not
       agentName: identity.familyName,
-      message: {
-        role: "assistant",
-        content: args.prompt,
-      },
+      content: args.prompt,
     });
+
+    // Mirror the reply to Telegram when the conversation started there.
+    // Scheduled so a Telegram outage can't fail the operator's send.
+    await ctx.scheduler.runAfter(
+      0,
+      internal.system.telegram.deliverOperatorMessage,
+      {
+        conversationId: conversation._id,
+        text: args.prompt,
+      },
+    );
   },
 });
 
@@ -171,11 +119,9 @@ export const getMany = query({
       });
     }
 
-    const paginated = await supportAgent.listMessages(ctx, {
+    return await listMessages(ctx, {
       threadId: args.threadId,
       paginationOpts: args.paginationOpts,
     });
-
-    return paginated;
   },
 });

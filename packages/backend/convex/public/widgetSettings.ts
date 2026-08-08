@@ -8,11 +8,20 @@ export const getByOrganizationId = query({
   handler: async (ctx, args) => {
     const widgetSettings = await ctx.db
       .query("widgetSettings")
-      .withIndex("by_organization_id", (q) => 
+      .withIndex("by_organization_id", (q) =>
         q.eq("organizationId", args.organizationId),
       )
       .unique();
 
-    return widgetSettings;
+    if (!widgetSettings) {
+      return null;
+    }
+
+    return {
+      ...widgetSettings,
+      logoUrl: widgetSettings.logoStorageId
+        ? await ctx.storage.getUrl(widgetSettings.logoStorageId)
+        : null,
+    };
   },
 });
