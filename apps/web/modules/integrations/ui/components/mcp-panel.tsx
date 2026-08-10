@@ -22,17 +22,40 @@ const CONFIG_FILE = `{
   }
 }`;
 
-const TOOLS = [
-  ["get_brand", "Widget settings and colours already in use"],
-  ["list_announcements", "Every banner and popup"],
-  ["create_announcement", "Create a banner or popup"],
-  ["update_announcement", "Change an existing one"],
-  ["publish_announcement", "Turn one on or off"],
-  ["delete_announcement", "Remove one permanently"],
-  ["list_surveys", "Every survey"],
-  ["create_survey", "Rating, NPS or text survey"],
-  ["get_survey_results", "Scores and comments"],
+const TOOL_GROUPS = [
+  {
+    title: "Setup",
+    tools: [
+      ["get_brand", "Widget settings and colours already in use"],
+      ["list_departments", "Every department, with its id"],
+      ["create_department", "Add a product or site"],
+      ["get_embed_script", "Install snippet, optionally per department"],
+    ],
+  },
+  {
+    title: "Announcements",
+    tools: [
+      ["list_announcements", "Every banner and popup"],
+      ["create_announcement", "Banner or popup, with image or video"],
+      ["update_announcement", "Change an existing one"],
+      ["publish_announcement", "Turn one on or off"],
+      ["delete_announcement", "Remove one permanently"],
+    ],
+  },
+  {
+    title: "Surveys",
+    tools: [
+      ["list_surveys", "Every survey"],
+      ["create_survey", "Rating, NPS or text survey"],
+      ["get_survey_results", "Scores and comments"],
+    ],
+  },
 ] as const;
+
+const TOOL_COUNT = TOOL_GROUPS.reduce(
+  (total, group) => total + group.tools.length,
+  0,
+);
 
 export const McpPanel = () => {
   return (
@@ -81,16 +104,38 @@ export const McpPanel = () => {
         </Step>
 
         <Step isLast number={3} title="Ask for what you want">
-          <div className="rounded-lg border bg-muted/40 p-3.5">
-            <p className="text-sm italic">
-              “Create a banner announcing our Black Friday sale, 30% off, ending
-              Monday.”
-            </p>
+          <div className="space-y-2">
+            <div className="rounded-lg border bg-muted/40 p-3.5">
+              <p className="text-sm italic">
+                “Create a banner announcing our Black Friday sale, 30% off,
+                ending Monday.”
+              </p>
+              <p className="mt-1.5 text-muted-foreground text-xs leading-relaxed">
+                Reads your existing widget colours first, writes the copy, picks
+                a matching palette, and publishes it.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-3.5">
+              <p className="text-sm italic">
+                “Add a department for our warehouse site and give me the Next.js
+                snippet to install it.”
+              </p>
+              <p className="mt-1.5 text-muted-foreground text-xs leading-relaxed">
+                Creates the department and hands back a snippet already scoped to
+                it, so that site only sees its own announcements and surveys.
+              </p>
+            </div>
+            <div className="rounded-lg border bg-muted/40 p-3.5">
+              <p className="text-sm italic">
+                “Make a popup with this YouTube walkthrough of the new
+                dashboard.”
+              </p>
+              <p className="mt-1.5 text-muted-foreground text-xs leading-relaxed">
+                Popups can carry an image, a video file or a YouTube link, which
+                plays inside the popup rather than sending visitors away.
+              </p>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            The agent reads your existing widget colours first, writes the copy,
-            picks a matching palette, and publishes it.
-          </p>
         </Step>
       </div>
 
@@ -98,16 +143,27 @@ export const McpPanel = () => {
         <div className="flex items-center gap-2">
           <p className="font-medium text-sm">Available tools</p>
           <Badge className="font-mono text-[10px]" variant="secondary">
-            {TOOLS.length}+
+            {TOOL_COUNT}+
           </Badge>
         </div>
-        <div className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-          {TOOLS.map(([name, description]) => (
-            <div className="flex items-baseline gap-2 text-sm" key={name}>
-              <code className="font-mono text-[12px] text-primary">{name}</code>
-              <span className="truncate text-muted-foreground text-xs">
-                {description}
-              </span>
+        <div className="space-y-3.5">
+          {TOOL_GROUPS.map((group) => (
+            <div className="space-y-1.5" key={group.title}>
+              <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {group.title}
+              </p>
+              <div className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                {group.tools.map(([name, description]) => (
+                  <div className="flex items-baseline gap-2 text-sm" key={name}>
+                    <code className="font-mono text-[12px] text-primary">
+                      {name}
+                    </code>
+                    <span className="truncate text-muted-foreground text-xs">
+                      {description}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>

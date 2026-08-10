@@ -72,7 +72,12 @@ export async function assertDepartmentInOrg(
   }
 }
 
-function cleanName(name: string) {
+/**
+ * Exported so the MCP entry point normalizes exactly as the dashboard does - a
+ * department created by an agent should be indistinguishable from one created
+ * by hand.
+ */
+export function cleanName(name: string) {
   const trimmed = name.trim();
 
   if (!trimmed) {
@@ -83,6 +88,10 @@ function cleanName(name: string) {
   }
 
   return trimmed.slice(0, MAX_NAME_LENGTH);
+}
+
+export function cleanDescription(description: string | undefined) {
+  return description?.trim().slice(0, MAX_DESCRIPTION_LENGTH);
 }
 
 export const getMany = query({
@@ -113,7 +122,7 @@ export const create = mutation({
     return await ctx.db.insert("departments", {
       organizationId: orgId,
       name: cleanName(args.name),
-      description: args.description?.trim().slice(0, MAX_DESCRIPTION_LENGTH),
+      description: cleanDescription(args.description),
     });
   },
 });
@@ -130,7 +139,7 @@ export const update = mutation({
 
     await ctx.db.patch(args.departmentId, {
       name: cleanName(args.name),
-      description: args.description?.trim().slice(0, MAX_DESCRIPTION_LENGTH),
+      description: cleanDescription(args.description),
     });
   },
 });

@@ -8,6 +8,11 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import * as z from "zod4";
 
 import {
+  FILENAME_BY_INTEGRATION,
+  PLACEMENT_BY_INTEGRATION,
+} from "@/modules/integrations/constants";
+import { createScript } from "@/modules/integrations/utils";
+import {
   listUserOrganizations,
   resolveOrganizationId,
 } from "@/modules/mcp/organizations";
@@ -267,6 +272,100 @@ const handler = createMcpHandler((server) => {
           organizationId: orgId,
         }),
       ),
+    ),
+  );
+
+  server.registerTool(
+    "create_department",
+    {
+      description:
+        "Create a department (a separate product or site within this organization). Returns the new id, which can then be passed to create_announcement, create_survey or get_embed_script.",
+      inputSchema: z.object({
+        organizationId,
+        name: z
+          .string()
+          .min(1)
+          .describe("Display name, e.g. Warehouse or Marketing site"),
+        description: z
+          .string()
+          .optional()
+          .describe("Optional note about what this department covers"),
+      }),
+    },
+    tool(
+      async (
+        args: {
+          organizationId?: string;
+          name: string;
+          description?: string;
+        },
+        orgId,
+      ) =>
+        text(
+          await convex.mutation(api.mcp.departments.create, {
+            secret,
+            organizationId: orgId,
+            name: args.name,
+            description: args.description,
+          }),
+        ),
+    ),
+  );
+
+  server.registerTool(
+    "get_embed_script",
+    {
+      description:
+        "Get the snippet to install the widget on a website. Pass a departmentId to scope the page to one department, so it only sees that department's announcements and surveys.",
+      inputSchema: z.object({
+        organizationId,
+        framework: z
+          .enum(["html", "react", "nextjs", "javascript"])
+          .default("html")
+          .describe("Which flavour of snippet to return"),
+        departmentId: z
+          .string()
+          .optional()
+          .describe(
+            "Id from list_departments or create_department. Omit for a page that should see organization-wide announcements only.",
+          ),
+      }),
+    },
+    tool(
+      async (
+        args: {
+          organizationId?: string;
+          framework?: "html" | "react" | "nextjs" | "javascript";
+          departmentId?: string;
+        },
+        orgId,
+      ) => {
+        const framework = args.framework ?? "html";
+
+        // A snippet is copy-pasted onto a live site, so a wrong or foreign
+        // department id would fail silently there - catch it here instead.
+        if (args.departmentId) {
+          const departments = await convex.query(api.mcp.departments.getMany, {
+            secret,
+            organizationId: orgId,
+          });
+
+          if (!departments.some((d) => d.id === args.departmentId)) {
+            return failed(
+              new Error(
+                `No department ${args.departmentId} in this organization. Call list_departments to see the valid ids.`,
+              ),
+            );
+          }
+        }
+
+        return text({
+          framework,
+          filename: FILENAME_BY_INTEGRATION[framework],
+          placement: PLACEMENT_BY_INTEGRATION[framework],
+          script: createScript(framework, orgId, args.departmentId),
+        });
+      },
     ),
   );
 
