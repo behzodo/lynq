@@ -11,14 +11,20 @@ export const validate = action({
     organizationId: v.string(),
   },
   handler: async (_, args) => {
-    const organization = await clerkClient.organizations.getOrganization({
-      organizationId: args.organizationId,
-    });
-    
-    if (organization) {
-    return { valid: true }
-    } else {
-      return { valid: false, reason: "Organization not valid" };
+    // Clerk throws on an unknown organization rather than returning null, so an
+    // unrecognised id has to be caught here - otherwise it reaches the widget as
+    // a transport failure and reads as "Unable to verify organization".
+    try {
+      await clerkClient.organizations.getOrganization({
+        organizationId: args.organizationId,
+      });
+
+      return { valid: true };
+    } catch {
+      return {
+        valid: false,
+        reason: `Organization ${args.organizationId} not found`,
+      };
     }
   },
 });
