@@ -21,6 +21,19 @@ const announcementFields = {
  * Every handler below re-checks that the announcement belongs to the caller's
  * organization - the org id only ever comes from the verified Clerk identity.
  */
+/**
+ * The org id if the caller has one, otherwise null. Reads use this so they can
+ * return an empty list during the window where Convex auth has not caught up
+ * with Clerk yet - a component mounting mid org switch is not an error.
+ */
+async function getOrgId(ctx: { auth: { getUserIdentity: () => Promise<unknown> } }) {
+  const identity = (await ctx.auth.getUserIdentity()) as {
+    orgId?: string;
+  } | null;
+
+  return identity?.orgId ?? null;
+}
+
 async function requireOrgId(ctx: { auth: { getUserIdentity: () => Promise<unknown> } }) {
   const identity = (await ctx.auth.getUserIdentity()) as {
     orgId?: string;
@@ -48,7 +61,11 @@ async function requireOrgId(ctx: { auth: { getUserIdentity: () => Promise<unknow
 export const getMany = query({
   args: {},
   handler: async (ctx) => {
-    const orgId = await requireOrgId(ctx);
+    const orgId = await getOrgId(ctx);
+
+    if (orgId === null) {
+      return [];
+    }
 
     return await ctx.db
       .query("announcements")

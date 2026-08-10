@@ -21,6 +21,21 @@ const surveyFields = {
   isActive: v.boolean(),
 };
 
+/**
+ * The org id if the caller has one, otherwise null. Reads use this so they can
+ * return an empty list during the window where Convex auth has not caught up
+ * with Clerk yet - a component mounting mid org switch is not an error.
+ */
+async function getOrgId(ctx: {
+  auth: { getUserIdentity: () => Promise<unknown> };
+}) {
+  const identity = (await ctx.auth.getUserIdentity()) as {
+    orgId?: string;
+  } | null;
+
+  return identity?.orgId ?? null;
+}
+
 async function requireOrgId(ctx: {
   auth: { getUserIdentity: () => Promise<unknown> };
 }) {
@@ -50,7 +65,11 @@ async function requireOrgId(ctx: {
 export const getMany = query({
   args: {},
   handler: async (ctx) => {
-    const orgId = await requireOrgId(ctx);
+    const orgId = await getOrgId(ctx);
+
+    if (orgId === null) {
+      return [];
+    }
 
     const surveys = await ctx.db
       .query("surveys")
