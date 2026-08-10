@@ -156,6 +156,19 @@ const announcementFields = {
     .url()
     .optional()
     .describe("Where the button links. Required if ctaLabel is set."),
+  mediaType: z
+    .enum(["image", "video", "youtube"])
+    .optional()
+    .describe(
+      "Media shown at the top of a popup. Omit for none. Ignored for banners.",
+    ),
+  mediaUrl: z
+    .string()
+    .url()
+    .optional()
+    .describe(
+      "Image/video URL, or the YouTube watch link. Required if mediaType is set.",
+    ),
   bgColor: color("Background colour"),
   textColor: color("Text colour"),
   position: z

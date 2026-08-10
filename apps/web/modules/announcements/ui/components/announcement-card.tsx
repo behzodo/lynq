@@ -68,12 +68,16 @@ const Thumbnail = ({ announcement }: { announcement: Announcement }) => {
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-black/25">
           <div
-            className="flex h-7 w-11 flex-col items-center justify-center gap-1 rounded-md px-1 shadow"
+            className="flex h-7 w-11 flex-col items-center justify-center gap-1 overflow-hidden rounded-md px-1 shadow"
             style={{
               background: announcement.bgColor,
               color: announcement.textColor,
             }}
           >
+            {/* Stands in for the full-bleed media strip the popup renders */}
+            {announcement.mediaType && (
+              <div className="-mx-1 -mt-1 h-2 w-11 shrink-0 bg-current opacity-25" />
+            )}
             <div className="h-0.5 w-6 rounded-full bg-current opacity-80" />
             <div className="h-0.5 w-8 rounded-full bg-current opacity-40" />
             {announcement.ctaLabel && (

@@ -40,6 +40,8 @@ import {
   AnnouncementFormSchema,
   COLOR_PRESETS,
   DEFAULT_ANNOUNCEMENT,
+  MEDIA_TYPES,
+  NO_MEDIA,
 } from "../../schemas";
 import { AnnouncementPreview } from "./announcement-preview";
 import { DepartmentField } from "@/modules/departments/ui/components/department-field";
@@ -83,6 +85,8 @@ export const AnnouncementFormDialog = ({
             message: announcement.message,
             ctaLabel: announcement.ctaLabel ?? "",
             ctaUrl: announcement.ctaUrl ?? "",
+            mediaType: announcement.mediaType ?? NO_MEDIA,
+            mediaUrl: announcement.mediaUrl ?? "",
             bgColor: announcement.bgColor,
             textColor: announcement.textColor,
             position: announcement.position,
@@ -96,10 +100,17 @@ export const AnnouncementFormDialog = ({
   const values = form.watch();
 
   const onSubmit = async (data: AnnouncementFormSchema) => {
-    // "all" is a form-only sentinel - Convex wants the field absent
+    // "all" and "none" are form-only sentinels - Convex wants the field absent.
+    // Media is popup-only, so a banner always saves without it.
+    const hasMedia = data.type === "popup" && data.mediaType !== NO_MEDIA;
+
     const payload = {
       ...data,
       departmentId: toDepartmentArg(data.departmentId),
+      mediaType: hasMedia
+        ? (data.mediaType as "image" | "video" | "youtube")
+        : undefined,
+      mediaUrl: hasMedia ? data.mediaUrl?.trim() : undefined,
     };
 
     try {
@@ -260,6 +271,73 @@ export const AnnouncementFormDialog = ({
                 )}
               />
             </div>
+
+            {/* A banner bar has no room for media, so this is popup-only */}
+            {values.type === "popup" && (
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,180px)_1fr]">
+                <FormField
+                  control={form.control}
+                  name="mediaType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Media</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {MEDIA_TYPES.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {values.mediaType !== NO_MEDIA && (
+                  <FormField
+                    control={form.control}
+                    name="mediaUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {values.mediaType === "youtube"
+                            ? "YouTube link"
+                            : "Media URL"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder={
+                              values.mediaType === "youtube"
+                                ? "https://youtu.be/dQw4w9WgXcQ"
+                                : values.mediaType === "video"
+                                  ? "https://example.com/clip.mp4"
+                                  : "https://example.com/banner.png"
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {values.mediaType === "youtube"
+                            ? "Shows the thumbnail with a play button; it plays inside the popup"
+                            : "Shown at the top of the popup, cropped to 16:9"}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Colors</Label>

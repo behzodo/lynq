@@ -10,6 +10,10 @@ const announcementFields = {
   message: v.string(),
   ctaLabel: v.optional(v.string()),
   ctaUrl: v.optional(v.string()),
+  mediaType: v.optional(
+    v.union(v.literal("image"), v.literal("video"), v.literal("youtube")),
+  ),
+  mediaUrl: v.optional(v.string()),
   bgColor: v.string(),
   textColor: v.string(),
   position: v.union(v.literal("top"), v.literal("bottom")),

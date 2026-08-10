@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Popup media preview</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 40px 24px;
+      background: #f5f5f5;
+      color: #171717;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    p.lede { margin: 0 0 24px; color: #52525b; font-size: 15px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; }
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #171717;
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    button.secondary { background: #e4e4e7; color: #171717; }
+    ul { color: #52525b; font-size: 14px; line-height: 1.7; padding-left: 20px; }
+    code { background: #f4f4f5; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Popup media preview</h1>
+    <p class="lede">
+      Renders the real embed popup against local fixtures, so no Convex data or
+      dashboard announcement is needed. Pick a variant to open it.
+    </p>
+
+    <div class="controls">
+      <button onclick="showFixture('youtube')">YouTube</button>
+      <button onclick="showFixture('image')">Image</button>
+      <button onclick="showFixture('video')">Video file</button>
+      <button onclick="showFixture('plain')">No media</button>
+      <button class="secondary" onclick="showFixture('light')">Light palette</button>
+    </div>
+
+    <ul>
+      <li>YouTube: thumbnail + play button, click swaps in the inline player</li>
+      <li>Dismiss with the <code>×</code>, the backdrop, or the <kbd>Esc</kbd> key</li>
+      <li>Dismissals are cleared automatically each time you pick a variant</li>
+    </ul>
+  </div>
+
+  <!--
+    Runs before the embed module so the stub is in place for its first fetch.
+    This page is a local harness only; it is never bundled or deployed.
+  -->
+  <script>
+    const FIXTURES = {
+      youtube: {
+        title: "Watch the 2 minute tour",
+        message: "Everything that shipped this month, in one short walkthrough. The video plays right here — nobody gets sent off to YouTube.",
+        ctaLabel: "Read the changelog",
+        ctaUrl: "https://example.com",
+        mediaType: "youtube",
+        mediaUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        bgColor: "#171717",
+        textColor: "#ffffff",
+      },
+      image: {
+        title: "Dark mode is here",
+        message: "Every screen in the dashboard now follows your system theme.",
+        ctaLabel: "Try it",
+        ctaUrl: "https://example.com",
+        mediaType: "image",
+        mediaUrl: "https://picsum.photos/id/1067/1280/720",
+        bgColor: "#111827",
+        textColor: "#ffffff",
+      },
+      video: {
+        title: "New onboarding flow",
+        message: "A short clip of the new setup wizard, served straight from an mp4.",
+        ctaLabel: "",
+        ctaUrl: "",
+        mediaType: "video",
+        mediaUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
+        bgColor: "#16a34a",
+        textColor: "#ffffff",
+      },
+      plain: {
+        title: "O'qim O'chdi",
+        message: "Xurmatli Adminlar bundan buyogida mahsulotlarga oqim kerak bolmaydi endi bitta offer bitta oqimga teng. Xurmatli Adminlar bundan buyogida mahsulotlarga oqim kerak bolmaydi endi bitta offer bitta oqimga teng.",
+        ctaLabel: "Maluomto UCHUN",
+        ctaUrl: "https://example.com",
+        mediaType: null,
+        mediaUrl: "",
+        bgColor: "#171717",
+        textColor: "#ffffff",
+      },
+      light: {
+        title: "Now in every plan",
+        message: "Checking the popup holds up on a light background, where the dismiss button and body copy have to earn their contrast.",
+        ctaLabel: "See pricing",
+        ctaUrl: "https://example.com",
+        mediaType: "image",
+        mediaUrl: "https://picsum.photos/id/1024/1280/720",
+        bgColor: "#f3f4f6",
+        textColor: "#111827",
+      },
+    };
+
+    let current = "youtube";
+
+    const json = (body) =>
+      Promise.resolve(new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }));
+
+    const realFetch = window.fetch.bind(window);
+
+    window.fetch = function (input, init) {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url.includes("/announcements")) {
+        const fixture = FIXTURES[current];
+        return json({
+          announcements: [{
+            id: `preview-${current}`,
+            type: "popup",
+            position: "top",
+            dismissible: true,
+            ...fixture,
+          }],
+        });
+      }
+
+      // Keep the harness self-contained: no settings, no surveys
+      if (url.includes("/widget-settings")) return json({});
+      if (url.includes("/surveys")) return json({ surveys: [] });
+
+      return realFetch(input, init);
+    };
+
+    window.showFixture = function (name) {
+      current = name;
+
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith("echo_announcement_dismissed_")) {
+          localStorage.removeItem(key);
+        }
+      }
+
+      window.EchoWidget.init({ organizationId: "preview-org" });
+    };
+  </script>
+
+  <script type="module" src="/embed.ts" data-organization-id="preview-org"></script>
+</body>
+</html>

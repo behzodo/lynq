@@ -37,6 +37,13 @@ export default defineSchema({
     message: v.string(),
     ctaLabel: v.optional(v.string()),
     ctaUrl: v.optional(v.string()),
+    // Popups only - a banner bar has no room for media. Absent means no media;
+    // that is also what every announcement created before this field looks like.
+    mediaType: v.optional(
+      v.union(v.literal("image"), v.literal("video"), v.literal("youtube")),
+    ),
+    // Image/video source, or the YouTube watch/share link for "youtube"
+    mediaUrl: v.optional(v.string()),
     bgColor: v.string(),
     textColor: v.string(),
     // Banners only - popups are always centered

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { isSurfaceEnabled } from "../lib/widgetSettings";
 
 /**
  * Read-only feed consumed by the embed script on customer websites.
@@ -17,6 +18,11 @@ export const getActive = query({
     departmentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Org-level kill switch, independent of each announcement's isActive flag
+    if (!(await isSurfaceEnabled(ctx, args.organizationId, "announcements"))) {
+      return [];
+    }
+
     const announcements = await ctx.db
       .query("announcements")
       .withIndex("by_organization_id_and_is_active", (q) =>
@@ -40,6 +46,11 @@ export const getActive = query({
       message: announcement.message,
       ctaLabel: announcement.ctaLabel ?? "",
       ctaUrl: announcement.ctaUrl ?? "",
+      // Only popups render media, so don't ship it to banners at all
+      mediaType:
+        announcement.type === "popup" ? (announcement.mediaType ?? null) : null,
+      mediaUrl:
+        announcement.type === "popup" ? (announcement.mediaUrl ?? "") : "",
       bgColor: announcement.bgColor,
       textColor: announcement.textColor,
       position: announcement.position,
