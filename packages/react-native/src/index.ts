@@ -29,3 +29,22 @@ export type {
   SurveyAnswer,
   LynqStorage,
 } from "lynq-sdk-core";
+
+// Chat, inbox and tickets
+export { LynqWidget, type LynqWidgetProps } from "./widget/lynq-widget";
+export { WidgetView } from "./widget/widget-view";
+export { useWidget, type LynqImagePicker } from "./widget/context";
+export { defaultTheme, type LynqTheme } from "./widget/theme";
+export {
+  TICKET_CATEGORIES,
+  TICKET_STATUS_LABELS,
+  type WidgetScreen,
+} from "./widget/constants";
+export type {
+  ConversationStatus,
+  TicketCategory,
+  TicketDetail,
+  TicketStatus,
+  TicketSummary,
+  WidgetSettings,
+} from "./widget/api";

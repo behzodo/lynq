@@ -14,14 +14,24 @@ import {
   type LynqInsets,
 } from "./context";
 import { currentPlatform } from "./platform";
+import { buildTheme } from "./widget/theme";
 
 export interface LynqProviderProps {
   /**
-   * Convex HTTP actions live on the `.site` domain, not `.cloud`.
-   * e.g. https://basic-hound-309.convex.site
+   * The deployment URL Convex gives you, e.g.
+   * https://basic-hound-309.convex.cloud
    */
-  convexHttpUrl: string;
+  convexUrl: string;
+  /**
+   * Overrides where the announcement and survey feeds are read from. Convex
+   * serves HTTP actions from the .site twin of the .cloud URL, which is worked
+   * out automatically; set this only for a custom or self-hosted domain, where
+   * that pattern doesn't hold.
+   */
+  convexHttpUrl?: string;
   organizationId: string;
+  /** The widget's brand colour. Defaults to near-black. */
+  accentColor?: string;
   /** Which product this app is. Omit for organization-wide only. */
   departmentId?: string | null;
   /** Defaults to the running platform. Override only for testing. */
@@ -59,8 +69,14 @@ const resolveInsets = (override?: Partial<LynqInsets>): LynqInsets => ({
   bottom: override?.bottom ?? 0,
 });
 
+/** Convex serves HTTP actions from the .site twin of the .cloud URL. */
+const siteUrlFrom = (convexUrl: string) =>
+  convexUrl.replace(/\/+$/, "").replace(/\.convex\.cloud$/, ".convex.site");
+
 export function LynqProvider({
+  accentColor,
   convexHttpUrl,
+  convexUrl,
   organizationId,
   departmentId,
   platform,
@@ -76,7 +92,7 @@ export function LynqProvider({
   const value = useMemo<LynqContextValue>(
     () => ({
       client: createLynqClient({
-        convexHttpUrl,
+        convexHttpUrl: convexHttpUrl ?? siteUrlFrom(convexUrl),
         organizationId,
         departmentId,
         platform: platform ?? currentPlatform(),
@@ -84,9 +100,14 @@ export function LynqProvider({
       }),
       storage: storage ?? memoryStorage(),
       insets: resolveInsets({ top: insetTop, bottom: insetBottom }),
+      organizationId,
+      convexUrl,
+      theme: buildTheme(accentColor),
     }),
     [
+      accentColor,
       convexHttpUrl,
+      convexUrl,
       organizationId,
       departmentId,
       platform,
