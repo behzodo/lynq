@@ -29,6 +29,13 @@ const CLERK_ISSUER =
 /** Hex colour, 3 or 6 digits, rendered straight into CSS by the widget. */
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
+/**
+ * A CTA target: any scheme followed by "://" and something to go to. The
+ * scheme is left open on purpose, because an announcement shown inside an app
+ * wants a deep link ("stok://product/123") rather than a web address.
+ */
+const LINK = /^[a-z][a-z0-9+.-]*:\/\/\S+$/i;
+
 const color = (label: string) =>
   z
     .string()
@@ -143,8 +150,20 @@ const departmentId = z
 const asDepartmentId = (value?: string) =>
   value ? (value as Id<"departments">) : undefined;
 
+/**
+ * Which surfaces this shows on. Omitted means all of them, so an agent that
+ * doesn't mention platforms gets the old behaviour.
+ */
+const platforms = z
+  .array(z.enum(["web", "ios", "android"]))
+  .optional()
+  .describe(
+    "Surfaces to show on. Omit for every surface. Use this to keep an app-only message out of the website, or the other way round.",
+  );
+
 const announcementFields = {
   departmentId,
+  platforms,
   type: z
     .enum(["banner", "popup"])
     .describe("banner sits along the top or bottom edge; popup is centered"),
@@ -153,9 +172,11 @@ const announcementFields = {
   ctaLabel: z.string().optional().describe("Button text. Omit for no button."),
   ctaUrl: z
     .string()
-    .url()
+    .regex(LINK, "Must be a link such as https://... or myapp://product/123")
     .optional()
-    .describe("Where the button links. Required if ctaLabel is set."),
+    .describe(
+      "Where the button links. Required if ctaLabel is set. Use https:// for the web, or an app deep link such as myapp://product/123 to open a screen inside the app.",
+    ),
   bgColor: color("Background colour"),
   textColor: color("Text colour"),
   position: z
@@ -169,6 +190,7 @@ const announcementFields = {
 
 const surveyFields = {
   departmentId,
+  platforms,
   title: z.string().min(1).describe("Internal name for the survey"),
   question: z.string().min(1).describe("The question shown to the visitor"),
   type: z

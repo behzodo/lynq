@@ -5,6 +5,9 @@ import { assertDepartmentInOrg } from "../private/departments";
 
 const surveyFields = {
   departmentId: v.optional(v.id("departments")),
+  platforms: v.optional(
+    v.array(v.union(v.literal("web"), v.literal("ios"), v.literal("android"))),
+  ),
   title: v.string(),
   question: v.string(),
   type: v.union(v.literal("rating"), v.literal("nps"), v.literal("text")),

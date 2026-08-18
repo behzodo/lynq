@@ -36,6 +36,9 @@ http.route({
     const params = new URL(request.url).searchParams;
     const organizationId = params.get("organizationId");
     const departmentId = params.get("departmentId") ?? undefined;
+    // Absent means the caller is an embed script that predates the app SDK,
+    // which the query reads as "web"
+    const platform = params.get("platform") ?? undefined;
 
     if (!organizationId) {
       return json({ error: "Missing organizationId" }, 400);
@@ -44,10 +47,11 @@ http.route({
     const announcements = await ctx.runQuery(api.public.announcements.getActive, {
       organizationId,
       departmentId,
+      platform,
     });
 
     return json({ announcements }, 200, {
-      // Varies by department, so the cache key must include it
+      // Varies by department and platform, so the cache key must include both
       "Cache-Control": "public, max-age=30",
     });
   }),
@@ -68,6 +72,7 @@ http.route({
     const params = new URL(request.url).searchParams;
     const organizationId = params.get("organizationId");
     const departmentId = params.get("departmentId") ?? undefined;
+    const platform = params.get("platform") ?? undefined;
 
     if (!organizationId) {
       return json({ error: "Missing organizationId" }, 400);
@@ -76,6 +81,7 @@ http.route({
     const surveys = await ctx.runQuery(api.public.surveys.getActive, {
       organizationId,
       departmentId,
+      platform,
     });
 
     return json({ surveys }, 200, { "Cache-Control": "public, max-age=30" });

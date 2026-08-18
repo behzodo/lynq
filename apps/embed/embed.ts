@@ -2,6 +2,7 @@ import { EMBED_CONFIG } from './config';
 import { chatBubbleIcon, closeIcon } from './icons';
 import { createAnnouncementsController } from './announcements';
 import { createSurveysController } from './surveys';
+import { createEmbedClient } from './client';
 
 (function() {
   let iframe: HTMLIFrameElement | null = null;
@@ -321,11 +322,14 @@ import { createSurveysController } from './surveys';
     // Handle messages from widget
     window.addEventListener('message', handleMessage);
 
-    // Banners, popups and surveys render on the host page, outside the iframe
-    announcements = createAnnouncementsController(organizationId!, departmentId);
+    // Banners, popups and surveys render on the host page, outside the iframe.
+    // Both feeds share one client so the targeting is configured once.
+    const client = createEmbedClient(organizationId!, departmentId);
+
+    announcements = createAnnouncementsController(client);
     announcements.load();
 
-    surveys = createSurveysController(organizationId!, departmentId);
+    surveys = createSurveysController(client);
     surveys.load();
 
     loadBrandLogo();

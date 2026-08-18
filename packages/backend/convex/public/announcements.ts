@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
+import { matchesPlatform } from "../lib/targeting";
 
 /**
  * Read-only feed consumed by the embed script on customer websites.
@@ -15,6 +16,8 @@ export const getActive = query({
      * match nothing rather than fail argument validation.
      */
     departmentId: v.optional(v.string()),
+    /** "web", "ios" or "android". Absent is read as "web" - see lib/targeting. */
+    platform: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const announcements = await ctx.db
@@ -29,8 +32,9 @@ export const getActive = query({
     // installs made before departments existed keep doing.
     const visible = announcements.filter(
       (announcement) =>
-        announcement.departmentId === undefined ||
-        announcement.departmentId === args.departmentId,
+        (announcement.departmentId === undefined ||
+          announcement.departmentId === args.departmentId) &&
+        matchesPlatform(announcement.platforms, args.platform),
     );
 
     return visible.map((announcement) => ({

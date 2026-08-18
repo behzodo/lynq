@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { SESSION_DURATION_MS } from "../constants";
+import { touchContactSession } from "../lib/sessions";
 
 export const create = mutation({
   args: {
@@ -55,6 +56,11 @@ export const validate = mutation({
       return { valid: false, reason: "Contact session expired" };
     }
 
-    return { valid: true, contactSession };
+    // Every widget open runs through here, which makes this the moment that
+    // keeps a returning visitor signed in.
+    return {
+      valid: true,
+      contactSession: await touchContactSession(ctx, contactSession),
+    };
   },
 });

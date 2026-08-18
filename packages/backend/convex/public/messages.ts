@@ -2,9 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { listMessages, saveCustomerMessage } from "../lib/threads";
-import { SESSION_DURATION_MS } from "../constants";
-
-const AUTO_REFRESH_THRESHOLD_MS = 4 * 60 * 60 * 1000;
+import { touchContactSession } from "../lib/sessions";
 
 /**
  * Lets a widget visitor upload an image straight to storage. Gated on a live
@@ -65,14 +63,7 @@ export const create = mutation({
     }
 
     // Keep the visitor signed in while they are actively chatting
-    if (
-      contactSession.expiresAt - Date.now() <
-      AUTO_REFRESH_THRESHOLD_MS
-    ) {
-      await ctx.db.patch(args.contactSessionId, {
-        expiresAt: Date.now() + SESSION_DURATION_MS,
-      });
-    }
+    await touchContactSession(ctx, contactSession);
 
     // Attachments ride along as markdown so they stay plain text in the thread
     let prompt = args.prompt;

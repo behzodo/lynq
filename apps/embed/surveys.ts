@@ -1,37 +1,9 @@
-import { EMBED_CONFIG } from './config';
+import type { LynqClient, Survey } from 'lynq-sdk-core';
+import { createSurveysFeed } from 'lynq-sdk-core';
 import { closeIcon } from './icons';
+import { webStorage } from './storage';
 
-export interface Survey {
-  id: string;
-  title: string;
-  question: string;
-  type: 'rating' | 'nps' | 'text';
-  commentLabel: string;
-  thankYouMessage: string;
-  bgColor: string;
-  textColor: string;
-  position: 'bottom-right' | 'bottom-left' | 'center';
-  delaySeconds: number;
-}
-
-const ANSWERED_KEY_PREFIX = 'echo_survey_answered_';
-
-function isAnswered(id: string): boolean {
-  try {
-    return localStorage.getItem(`${ANSWERED_KEY_PREFIX}${id}`) === '1';
-  } catch {
-    // Private mode / blocked storage - it'll just ask again next visit
-    return false;
-  }
-}
-
-function markAnswered(id: string): void {
-  try {
-    localStorage.setItem(`${ANSWERED_KEY_PREFIX}${id}`, '1');
-  } catch {
-    // Ignore - the answer simply won't be remembered
-  }
-}
+export type { Survey };
 
 function withAlpha(hexColor: string, alpha: number): string {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor.trim());
@@ -58,33 +30,22 @@ function positionStyles(position: Survey['position']): string {
   `;
 }
 
-export function createSurveysController(
-  organizationId: string,
-  departmentId?: string | null,
-) {
+export function createSurveysController(client: LynqClient) {
+  const feed = createSurveysFeed(client, webStorage);
   const mounted: HTMLElement[] = [];
   const timers: number[] = [];
 
-  async function submit(survey: Survey, score: number | null, comment: string) {
-    markAnswered(survey.id);
-
-    try {
-      await fetch(`${EMBED_CONFIG.CONVEX_HTTP_URL}/survey-responses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          surveyId: survey.id,
-          score: score ?? undefined,
-          comment: comment || undefined,
-          metadata: {
-            url: window.location.href,
-            userAgent: navigator.userAgent,
-          },
-        }),
-      });
-    } catch (error) {
-      console.error('Echo Widget: failed to submit survey response', error);
-    }
+  // Fire and forget: the card shows its thank-you immediately, and sdk-core
+  // has already recorded the answer locally either way.
+  function submit(survey: Survey, score: number | null, comment: string) {
+    void feed.submit(survey.id, {
+      score: score ?? undefined,
+      comment: comment || undefined,
+      metadata: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      },
+    });
   }
 
   function buildScoreButtons(
@@ -177,10 +138,6 @@ export function createSurveysController(
   }
 
   function mount(survey: Survey) {
-    if (isAnswered(survey.id)) {
-      return;
-    }
-
     const card = document.createElement('div');
     card.style.cssText = `
       position: fixed;
@@ -220,7 +177,7 @@ export function createSurveysController(
     `;
     close.addEventListener('click', () => {
       // Dismissing counts as answered so we don't nag on every page view
-      markAnswered(survey.id);
+      void feed.dismiss(survey.id);
       card.remove();
     });
     card.appendChild(close);
@@ -320,37 +277,13 @@ export function createSurveysController(
   }
 
   async function load() {
-    if (!EMBED_CONFIG.CONVEX_HTTP_URL) {
+    const pending = await feed.load();
+
+    if (!pending) {
       return;
     }
 
-    try {
-      const params = new URLSearchParams({ organizationId });
-      if (departmentId) {
-        params.set('departmentId', departmentId);
-      }
-
-      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/surveys?${params.toString()}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = (await response.json()) as { surveys?: Survey[] };
-
-      // Only the first unanswered survey is shown, so we never stack cards
-      const next = (data.surveys ?? []).find((survey) => !isAnswered(survey.id));
-
-      if (!next) {
-        return;
-      }
-
-      const delay = Math.max(0, next.delaySeconds) * 1000;
-      timers.push(window.setTimeout(() => mount(next), delay));
-    } catch (error) {
-      console.error('Echo Widget: failed to load surveys', error);
-    }
+    timers.push(window.setTimeout(() => mount(pending.survey), pending.delayMs));
   }
 
   function destroy() {

@@ -1,0 +1,31 @@
+{
+  "name": "lynq-sdk-core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared rules behind the Lynq announcement and survey SDKs",
+  "keywords": ["lynq", "announcements", "surveys"],
+  "license": "MIT",
+  "homepage": "https://lynq-web.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/behzodo/lynq.git",
+    "directory": "packages/sdk-core"
+  },
+  "bugs": {
+    "url": "https://github.com/behzodo/lynq/issues"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

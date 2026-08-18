@@ -6,6 +6,7 @@ import {
   MousePointerClickIcon,
   PanelBottomIcon,
   PanelTopIcon,
+  MonitorSmartphoneIcon,
   PencilIcon,
   SquareIcon,
   Trash2Icon,
@@ -18,6 +19,10 @@ import { Button } from "@workspace/ui/components/button";
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
 import { departmentLabel } from "@/modules/departments/constants";
+import {
+  platformsLabel,
+  toPlatformsArg,
+} from "@/modules/platforms/constants";
 
 type Announcement = Doc<"announcements">;
 
@@ -93,6 +98,9 @@ export const AnnouncementCard = ({
   onDelete,
 }: Props) => {
   const departments = useQuery(api.private.departments.getMany);
+  // Only worth a chip when the targeting is actually narrowed -
+  // "All platforms" on every card is noise.
+  const restrictedPlatforms = toPlatformsArg(announcement.platforms);
   const isBanner = announcement.type === "banner";
 
   const PositionIcon = isBanner
@@ -145,6 +153,12 @@ export const AnnouncementCard = ({
               <Building2Icon className="size-3" />
               {departmentLabel(departments, announcement.departmentId)}
             </span>
+            {restrictedPlatforms && (
+              <span className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+                <MonitorSmartphoneIcon className="size-3" />
+                {platformsLabel(restrictedPlatforms)}
+              </span>
+            )}
           </div>
 
           <p className="line-clamp-2 text-muted-foreground text-sm">
