@@ -1,5 +1,5 @@
-import type { Announcement, LynqClient } from '@workspace/sdk-core';
-import { createAnnouncementsFeed } from '@workspace/sdk-core';
+import type { Announcement, LynqClient } from 'lynq-sdk-core';
+import { createAnnouncementsFeed } from 'lynq-sdk-core';
 import { closeIcon } from './icons';
 import { webStorage } from './storage';
 

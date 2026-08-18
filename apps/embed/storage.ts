@@ -1,4 +1,4 @@
-import type { LynqStorage } from '@workspace/sdk-core';
+import type { LynqStorage } from 'lynq-sdk-core';
 
 /**
  * localStorage, which throws instead of returning null in private mode and in

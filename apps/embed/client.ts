@@ -1,4 +1,4 @@
-import { createLynqClient, type LynqClient } from '@workspace/sdk-core';
+import { createLynqClient, type LynqClient } from 'lynq-sdk-core';
 import { EMBED_CONFIG } from './config';
 
 /**

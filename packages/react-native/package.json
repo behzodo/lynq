@@ -1,15 +1,15 @@
 {
-  "name": "lynq-sdk-core",
+  "name": "lynq-react-native",
   "version": "0.1.0",
   "type": "module",
-  "description": "Shared rules behind the Lynq announcement and survey SDKs",
-  "keywords": ["lynq", "announcements", "surveys"],
+  "description": "Lynq announcements and surveys for React Native and Expo apps",
+  "keywords": ["lynq", "react-native", "expo", "announcements", "surveys"],
   "license": "MIT",
   "homepage": "https://lynq-web.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/behzodo/lynq.git",
-    "directory": "packages/sdk-core"
+    "directory": "packages/react-native"
   },
   "bugs": {
     "url": "https://github.com/behzodo/lynq/issues"
@@ -17,15 +17,24 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "files": ["src", "README.md"],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "lynq-sdk-core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-native": ">=0.73"
+  },
   "devDependencies": {
+    "@types/react": "^19",
     "@workspace/typescript-config": "workspace:*",
+    "react": "^19.0.0",
+    "react-native": "^0.79.0",
     "typescript": "^5.7.3"
   }
 }

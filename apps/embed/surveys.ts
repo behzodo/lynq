@@ -1,5 +1,5 @@
-import type { LynqClient, Survey } from '@workspace/sdk-core';
-import { createSurveysFeed } from '@workspace/sdk-core';
+import type { LynqClient, Survey } from 'lynq-sdk-core';
+import { createSurveysFeed } from 'lynq-sdk-core';
 import { closeIcon } from './icons';
 import { webStorage } from './storage';
 

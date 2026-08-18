@@ -8,7 +8,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@workspace/sdk-core": "workspace:*"
+    "lynq-sdk-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",

@@ -35,21 +35,26 @@ export function createLynqClient(config: LynqClientConfig): LynqClient {
     config.onError?.(message, error);
   };
 
-  /** organizationId + departmentId + platform, the three feed filters. */
+  /**
+   * organizationId + departmentId + platform, the three feed filters.
+   *
+   * Built by hand rather than with URLSearchParams: React Native ships a
+   * minimal shim whose `set` is missing, so anything relying on it works in
+   * the browser and throws on a phone.
+   */
   const feedUrl = (path: string) => {
-    const params = new URLSearchParams({
-      organizationId: config.organizationId,
-    });
+    const params: Array<[string, string | null | undefined]> = [
+      ["organizationId", config.organizationId],
+      ["departmentId", config.departmentId],
+      ["platform", config.platform],
+    ];
 
-    if (config.departmentId) {
-      params.set("departmentId", config.departmentId);
-    }
+    const query = params
+      .filter(([, value]) => Boolean(value))
+      .map(([key, value]) => `${key}=${encodeURIComponent(String(value))}`)
+      .join("&");
 
-    if (config.platform) {
-      params.set("platform", config.platform);
-    }
-
-    return `${config.convexHttpUrl}${path}?${params.toString()}`;
+    return `${config.convexHttpUrl}${path}?${query}`;
   };
 
   async function fetchFeed<K extends string, T>(
