@@ -114,14 +114,15 @@ behaviour matches. What a phone changes:
   native dependency for the host app; the message list and its timestamps carry
   the same information.
 
-## Known limitation: session length
+## Sessions
 
-A contact session lasts 24 hours (`SESSION_DURATION_MS` in the backend), and it
-is what ties someone to their own conversations and tickets. On a website that
-is unremarkable. In an installed app it means re-entering a name and email
-roughly once a day to see your own support history, which is worth raising
-before this ships widely. Chatting extends the session; reading tickets does
-not.
+A contact session ties someone to their own conversations and tickets, and it
+is stored on their device. It lasts 30 days and slides: opening support at all
+pushes it back out to a full 30 days, so a returning user is only asked for a
+name and email again after a month of not using it.
+
+Pass `storage` or none of this persists - the session lives in memory and the
+visitor signs in again on every launch.
 
 ## Publishing
 

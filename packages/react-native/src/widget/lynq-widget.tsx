@@ -105,7 +105,9 @@ export function LynqWidget({ mode = "launcher", pickImage }: LynqWidgetProps) {
               : null,
           ]}
         >
-          {widget(() => setIsOpen(false))}
+          {/* Mounted only once opened, so the boot sequence and the
+              websocket don't run on every app start */}
+          {isOpen ? widget(() => setIsOpen(false)) : null}
         </SafeAreaView>
       </Modal>
     </>
