@@ -13,33 +13,18 @@ import {
 import { SnippetTabs } from "../components/snippet-tabs";
 import { GithubPanel } from "../components/github-panel";
 import { McpPanel } from "../components/mcp-panel";
+import { MobileAppPanel } from "../components/mobile-app-panel";
 import { TelegramPanel } from "@/modules/telegram/ui/components/telegram-panel";
 
 const SECTIONS = [
   { id: "quickstart", label: "Quickstart" },
   { id: "install", label: "Install the widget" },
   { id: "verify", label: "Verify" },
+  { id: "mobile", label: "Mobile apps" },
   { id: "messaging", label: "Messaging apps" },
   { id: "github", label: "GitHub" },
   { id: "ai-agents", label: "AI agents" },
 ];
-
-const FILENAME_BY_INTEGRATION: Record<string, string> = {
-  html: "index.html",
-  react: "ChatWidget.tsx",
-  nextjs: "app/layout.tsx",
-  javascript: "index.html",
-};
-
-const PLACEMENT_BY_INTEGRATION: Record<string, string> = {
-  html: "Paste this just before the closing </body> tag on every page that should show the widget.",
-  react:
-    "Render <ChatWidget /> once, high in your tree — in your root layout or App component.",
-  nextjs:
-    "Add it to your root layout so the widget is present on every route.",
-  javascript:
-    "Paste this anywhere after the page has a <body>, or inside your existing bundle.",
-};
 
 export const IntegrationsView = () => {
   const { organization } = useOrganization();
@@ -137,6 +122,17 @@ export const IntegrationsView = () => {
                 </p>
               </Step>
             </div>
+          </DocsSection>
+
+          <Separator />
+
+          <DocsSection
+            description="The same announcements, surveys, chat and tickets inside your React Native or Expo app, from the same dashboard."
+            eyebrow="Optional"
+            id="mobile"
+            title="Mobile apps"
+          >
+            <MobileAppPanel organizationId={organizationId} />
           </DocsSection>
 
           <Separator />

@@ -90,3 +90,45 @@ export default function RootLayout({ children }) {
     </html>
   );
 }`;
+
+/**
+ * The deployment the app SDK talks to - the same one this dashboard uses, so
+ * the snippet is copy-pasteable instead of a placeholder to go and look up.
+ */
+const CONVEX_URL =
+  process.env.NEXT_PUBLIC_CONVEX_URL || "https://your-deployment.convex.cloud";
+
+export const REACT_NATIVE_INSTALL = `npm install lynq-react-native convex
+
+# Recommended. Without it, people sign in again on every launch.
+npx expo install @react-native-async-storage/async-storage`;
+
+export const REACT_NATIVE_SCRIPT = `import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LynqProvider, LynqWidget, asyncStorage } from "lynq-react-native";
+
+export default function App() {
+  return (
+    <LynqProvider
+      convexUrl="${CONVEX_URL}"
+      organizationId="{{ORGANIZATION_ID}}"
+      storage={asyncStorage(AsyncStorage)}
+    >
+      <RootNavigator />
+      <LynqWidget />
+    </LynqProvider>
+  );
+}`;
+
+/** Optional: attaching an image needs a picker from the host app. */
+export const REACT_NATIVE_IMAGE_PICKER = `import * as ImagePicker from "expo-image-picker";
+
+<LynqWidget
+  pickImage={async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    const asset = result.assets?.[0];
+
+    return asset
+      ? { uri: asset.uri, name: asset.fileName ?? undefined, mimeType: asset.mimeType }
+      : null;
+  }}
+/>`;

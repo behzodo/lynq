@@ -12,7 +12,19 @@ import {
   resolveOrganizationId,
 } from "@/modules/mcp/organizations";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+/**
+ * Built on first use rather than at import.
+ *
+ * `next build` imports this route while collecting page data, and
+ * ConvexHttpClient throws on an undefined deployment address. Constructing it
+ * eagerly therefore turned a missing environment variable into a failed build
+ * rather than a failed request, which is a poor trade: nothing at build time
+ * needs a Convex connection.
+ */
+let convexClient: ConvexHttpClient | undefined;
+
+const convex = () =>
+  (convexClient ??= new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!));
 
 /**
  * Shared secret between this route and Convex. The Convex endpoints are open to
@@ -254,7 +266,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(async (_args: { organizationId?: string }, orgId) =>
       text(
-        await convex.query(api.mcp.brand.get, {
+        await convex().query(api.mcp.brand.get, {
           secret,
           organizationId: orgId,
         }),
@@ -271,7 +283,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(async (_args: { organizationId?: string }, orgId) =>
       text(
-        await convex.query(api.mcp.departments.getMany, {
+        await convex().query(api.mcp.departments.getMany, {
           secret,
           organizationId: orgId,
         }),
@@ -289,7 +301,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(async (_args: { organizationId?: string }, orgId) =>
       text(
-        await convex.query(api.mcp.announcements.getMany, {
+        await convex().query(api.mcp.announcements.getMany, {
           secret,
           organizationId: orgId,
         }),
@@ -307,7 +319,7 @@ const handler = createMcpHandler((server) => {
     tool(async (args: AnnouncementInput, orgId) => {
       const { organizationId: _ignored, ...fields } = args;
 
-      const id = await convex.mutation(api.mcp.announcements.create, {
+      const id = await convex().mutation(api.mcp.announcements.create, {
         secret,
         organizationId: orgId,
         ...fields,
@@ -340,7 +352,7 @@ const handler = createMcpHandler((server) => {
           ...fields
         } = args;
 
-        await convex.mutation(api.mcp.announcements.update, {
+        await convex().mutation(api.mcp.announcements.update, {
           secret,
           organizationId: orgId,
           announcementId: announcementId as never,
@@ -373,7 +385,7 @@ const handler = createMcpHandler((server) => {
         },
         orgId,
       ) => {
-        await convex.mutation(api.mcp.announcements.setActive, {
+        await convex().mutation(api.mcp.announcements.setActive, {
           secret,
           organizationId: orgId,
           announcementId: args.announcementId as never,
@@ -401,7 +413,7 @@ const handler = createMcpHandler((server) => {
         args: { announcementId: string; organizationId?: string },
         orgId,
       ) => {
-        await convex.mutation(api.mcp.announcements.remove, {
+        await convex().mutation(api.mcp.announcements.remove, {
           secret,
           organizationId: orgId,
           announcementId: args.announcementId as never,
@@ -422,7 +434,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(async (_args: { organizationId?: string }, orgId) =>
       text(
-        await convex.query(api.mcp.surveys.getMany, {
+        await convex().query(api.mcp.surveys.getMany, {
           secret,
           organizationId: orgId,
         }),
@@ -440,7 +452,7 @@ const handler = createMcpHandler((server) => {
     tool(async (args: SurveyInput, orgId) => {
       const { organizationId: _ignored, ...fields } = args;
 
-      const id = await convex.mutation(api.mcp.surveys.create, {
+      const id = await convex().mutation(api.mcp.surveys.create, {
         secret,
         organizationId: orgId,
         ...fields,
@@ -465,7 +477,7 @@ const handler = createMcpHandler((server) => {
     tool(async (args: SurveyInput & { surveyId: string }, orgId) => {
       const { organizationId: _ignored, surveyId, ...fields } = args;
 
-      await convex.mutation(api.mcp.surveys.update, {
+      await convex().mutation(api.mcp.surveys.update, {
         secret,
         organizationId: orgId,
         surveyId: surveyId as never,
@@ -492,7 +504,7 @@ const handler = createMcpHandler((server) => {
         args: { surveyId: string; isActive: boolean; organizationId?: string },
         orgId,
       ) => {
-        await convex.mutation(api.mcp.surveys.setActive, {
+        await convex().mutation(api.mcp.surveys.setActive, {
           secret,
           organizationId: orgId,
           surveyId: args.surveyId as never,
@@ -514,7 +526,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(
       async (args: { surveyId: string; organizationId?: string }, orgId) => {
-        await convex.mutation(api.mcp.surveys.remove, {
+        await convex().mutation(api.mcp.surveys.remove, {
           secret,
           organizationId: orgId,
           surveyId: args.surveyId as never,
@@ -534,7 +546,7 @@ const handler = createMcpHandler((server) => {
     },
     tool(async (args: { surveyId: string; organizationId?: string }, orgId) =>
       text(
-        await convex.query(api.mcp.surveys.getResults, {
+        await convex().query(api.mcp.surveys.getResults, {
           secret,
           organizationId: orgId,
           surveyId: args.surveyId as never,
