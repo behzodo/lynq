@@ -5,6 +5,7 @@ import {
   BarChart3Icon,
   Building2Icon,
   MessageSquareIcon,
+  MonitorSmartphoneIcon,
   PencilIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -14,6 +15,10 @@ import { Button } from "@workspace/ui/components/button";
 import { Switch } from "@workspace/ui/components/switch";
 import { cn } from "@workspace/ui/lib/utils";
 import { departmentLabel } from "@/modules/departments/constants";
+import {
+  platformsLabel,
+  toPlatformsArg,
+} from "@/modules/platforms/constants";
 import { SURVEY_TYPE_LABELS, SurveyRow } from "../../schemas";
 
 interface Props {
@@ -69,6 +74,9 @@ export const SurveyCard = ({
   onDelete,
 }: Props) => {
   const departments = useQuery(api.private.departments.getMany);
+  // Only worth a chip when the targeting is actually narrowed -
+  // "All platforms" on every card is noise.
+  const restrictedPlatforms = toPlatformsArg(survey.platforms);
   const hasScore = survey.type !== "text";
   const scale = survey.type === "nps" ? 10 : 5;
 
@@ -111,6 +119,12 @@ export const SurveyCard = ({
               <Building2Icon className="size-3" />
               {departmentLabel(departments, survey.departmentId)}
             </span>
+            {restrictedPlatforms && (
+              <span className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+                <MonitorSmartphoneIcon className="size-3" />
+                {platformsLabel(restrictedPlatforms)}
+              </span>
+            )}
           </div>
 
           <p className="line-clamp-1 text-muted-foreground text-sm">

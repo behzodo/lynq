@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { ALL_DEPARTMENTS } from "@/modules/departments/constants";
+import type { Platform } from "@/modules/platforms/constants";
 
 export const announcementSchema = z.object({
   // ALL_DEPARTMENTS ("all") means organization-wide; mapped to undefined on save
   departmentId: z.string().optional(),
+  // Every box ticked means "everywhere"; mapped to undefined on save
+  platforms: z
+    .array(z.enum(["web", "ios", "android"]))
+    .min(1, "Pick at least one place to show this"),
   type: z.enum(["banner", "popup"]),
   title: z.string().min(1, "Title is required"),
   message: z.string().min(1, "Message is required"),
@@ -23,6 +28,7 @@ export type AnnouncementFormSchema = z.infer<typeof announcementSchema>;
 
 export const DEFAULT_ANNOUNCEMENT: AnnouncementFormSchema = {
   departmentId: ALL_DEPARTMENTS,
+  platforms: ["web", "ios", "android"] satisfies Platform[],
   type: "banner",
   title: "",
   message: "",

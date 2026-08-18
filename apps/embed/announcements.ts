@@ -1,37 +1,9 @@
-import { EMBED_CONFIG } from './config';
+import type { Announcement, LynqClient } from '@workspace/sdk-core';
+import { createAnnouncementsFeed } from '@workspace/sdk-core';
 import { closeIcon } from './icons';
+import { webStorage } from './storage';
 
-export interface Announcement {
-  id: string;
-  type: 'banner' | 'popup';
-  title: string;
-  message: string;
-  ctaLabel: string;
-  ctaUrl: string;
-  bgColor: string;
-  textColor: string;
-  position: 'top' | 'bottom';
-  dismissible: boolean;
-}
-
-const DISMISS_KEY_PREFIX = 'echo_announcement_dismissed_';
-
-function isDismissed(id: string): boolean {
-  try {
-    return localStorage.getItem(`${DISMISS_KEY_PREFIX}${id}`) === '1';
-  } catch {
-    // Private mode / blocked storage - just show it again next time
-    return false;
-  }
-}
-
-function markDismissed(id: string): void {
-  try {
-    localStorage.setItem(`${DISMISS_KEY_PREFIX}${id}`, '1');
-  } catch {
-    // Ignore - dismissal simply won't persist
-  }
-}
+export type { Announcement };
 
 function createDismissButton(color: string, onDismiss: () => void): HTMLButtonElement {
   const button = document.createElement('button');
@@ -197,19 +169,13 @@ function renderPopup(announcement: Announcement, onDismiss: () => void): HTMLEle
   return backdrop;
 }
 
-export function createAnnouncementsController(
-  organizationId: string,
-  departmentId?: string | null,
-) {
+export function createAnnouncementsController(client: LynqClient) {
+  const feed = createAnnouncementsFeed(client, webStorage);
   const mounted: HTMLElement[] = [];
 
   function mount(announcement: Announcement) {
-    if (isDismissed(announcement.id)) {
-      return;
-    }
-
     const remove = () => {
-      markDismissed(announcement.id);
+      void feed.dismiss(announcement.id);
       element.remove();
     };
 
@@ -223,37 +189,10 @@ export function createAnnouncementsController(
   }
 
   async function load() {
-    if (!EMBED_CONFIG.CONVEX_HTTP_URL) {
-      return;
-    }
-
-    try {
-      const params = new URLSearchParams({ organizationId });
-      if (departmentId) {
-        params.set('departmentId', departmentId);
-      }
-
-      const url = `${EMBED_CONFIG.CONVEX_HTTP_URL}/announcements?${params.toString()}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = (await response.json()) as { announcements?: Announcement[] };
-
-      // Only one popup at a time so we never stack modals on top of each other
-      let popupShown = false;
-
-      for (const announcement of data.announcements ?? []) {
-        if (announcement.type === 'popup') {
-          if (popupShown) continue;
-          popupShown = true;
-        }
-        mount(announcement);
-      }
-    } catch (error) {
-      console.error('Echo Widget: failed to load announcements', error);
+    // Already filtered down to what this visitor should see - which banners,
+    // and at most one popup
+    for (const announcement of await feed.load()) {
+      mount(announcement);
     }
   }
 

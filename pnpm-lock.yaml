@@ -25,6 +25,10 @@ importers:
         version: 5.7.3
 
   apps/embed:
+    dependencies:
+      '@workspace/sdk-core':
+        specifier: workspace:*
+        version: link:../../packages/sdk-core
     devDependencies:
       '@types/node':
         specifier: ^20
@@ -305,6 +309,15 @@ importers:
       typescript:
         specifier: latest
         version: 7.0.2
+
+  packages/sdk-core:
+    devDependencies:
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^5.7.3
+        version: 5.7.3
 
   packages/typescript-config: {}
 

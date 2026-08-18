@@ -1,0 +1,14 @@
+{
+  "extends": "@workspace/typescript-config/base.json",
+  "compilerOptions": {
+    // DOM is here only for `fetch` and `URLSearchParams`, which React Native
+    // provides too. Nothing in this package may touch `document`, `window` or
+    // `localStorage` - that is what the LynqStorage interface is for.
+    "lib": ["es2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

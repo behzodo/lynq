@@ -48,6 +48,11 @@ import {
   toDepartmentArg,
   toDepartmentField,
 } from "@/modules/departments/constants";
+import { PlatformsField } from "@/modules/platforms/ui/components/platforms-field";
+import {
+  toPlatformsArg,
+  toPlatformsField,
+} from "@/modules/platforms/constants";
 
 interface Props {
   open: boolean;
@@ -74,6 +79,7 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
       survey
         ? {
             departmentId: toDepartmentField(survey.departmentId),
+            platforms: toPlatformsField(survey.platforms),
             title: survey.title,
             question: survey.question,
             type: survey.type,
@@ -92,10 +98,12 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
   const values = form.watch();
 
   const onSubmit = async (data: SurveyFormSchema) => {
-    // "all" is a form-only sentinel - Convex wants the field absent
+    // "all" and "every platform ticked" are form-only - Convex wants both
+    // fields absent when they mean "no restriction"
     const payload = {
       ...data,
       departmentId: toDepartmentArg(data.departmentId),
+      platforms: toPlatformsArg(data.platforms),
     };
 
     try {
@@ -135,6 +143,12 @@ export const SurveyFormDialog = ({ open, onOpenChange, survey }: Props) => {
               control={form.control}
               description="Only pages whose snippet names this department will show it"
               name="departmentId"
+            />
+
+            <PlatformsField
+              control={form.control}
+              description="Untick a surface to keep this survey off it"
+              name="platforms"
             />
 
             <div className="grid gap-4 sm:grid-cols-2">

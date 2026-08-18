@@ -1,6 +1,17 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+/**
+ * Which surfaces an announcement or survey may appear on.
+ *
+ * Absent means every surface. That keeps everything created before the app
+ * SDK existed showing on the website exactly as it did, and it is the same
+ * rule departmentId already uses: unset is the widest possible audience.
+ */
+const platforms = v.optional(
+  v.array(v.union(v.literal("web"), v.literal("ios"), v.literal("android"))),
+);
+
 export default defineSchema({
   /**
    * A product or site inside one organization - "Delivery", "Warehouse".
@@ -32,6 +43,8 @@ export default defineSchema({
     // Absent means organization-wide: it shows on every install, including
     // the ones that predate departments.
     departmentId: v.optional(v.id("departments")),
+    // Absent means web, iOS and Android alike.
+    platforms,
     type: v.union(v.literal("banner"), v.literal("popup")),
     title: v.string(),
     message: v.string(),
@@ -50,6 +63,8 @@ export default defineSchema({
     organizationId: v.string(),
     // Absent means organization-wide - see announcements above.
     departmentId: v.optional(v.id("departments")),
+    // Absent means web, iOS and Android alike.
+    platforms,
     title: v.string(),
     question: v.string(),
     // rating = 1-5 stars, nps = 0-10 scale, text = free text only

@@ -5,6 +5,9 @@ import { assertDepartmentInOrg } from "../private/departments";
 
 const announcementFields = {
   departmentId: v.optional(v.id("departments")),
+  platforms: v.optional(
+    v.array(v.union(v.literal("web"), v.literal("ios"), v.literal("android"))),
+  ),
   type: v.union(v.literal("banner"), v.literal("popup")),
   title: v.string(),
   message: v.string(),

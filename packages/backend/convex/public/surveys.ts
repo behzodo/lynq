@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { matchesPlatform } from "../lib/targeting";
 
 /**
  * Read-only feed consumed by the embed script on customer websites.
@@ -9,6 +10,7 @@ export const getActive = query({
     organizationId: v.string(),
     // A plain string on purpose - see the note in public/announcements.ts
     departmentId: v.optional(v.string()),
+    platform: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const surveys = await ctx.db
@@ -21,8 +23,9 @@ export const getActive = query({
     // Surveys with no departmentId belong to the whole organization
     const visible = surveys.filter(
       (survey) =>
-        survey.departmentId === undefined ||
-        survey.departmentId === args.departmentId,
+        (survey.departmentId === undefined ||
+          survey.departmentId === args.departmentId) &&
+        matchesPlatform(survey.platforms, args.platform),
     );
 
     return visible.map((survey) => ({

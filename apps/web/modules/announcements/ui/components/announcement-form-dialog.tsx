@@ -47,6 +47,11 @@ import {
   toDepartmentArg,
   toDepartmentField,
 } from "@/modules/departments/constants";
+import { PlatformsField } from "@/modules/platforms/ui/components/platforms-field";
+import {
+  toPlatformsArg,
+  toPlatformsField,
+} from "@/modules/platforms/constants";
 
 interface Props {
   open: boolean;
@@ -78,6 +83,7 @@ export const AnnouncementFormDialog = ({
       announcement
         ? {
             departmentId: toDepartmentField(announcement.departmentId),
+            platforms: toPlatformsField(announcement.platforms),
             type: announcement.type,
             title: announcement.title,
             message: announcement.message,
@@ -96,10 +102,12 @@ export const AnnouncementFormDialog = ({
   const values = form.watch();
 
   const onSubmit = async (data: AnnouncementFormSchema) => {
-    // "all" is a form-only sentinel - Convex wants the field absent
+    // "all" and "every platform ticked" are form-only - Convex wants both
+    // fields absent when they mean "no restriction"
     const payload = {
       ...data,
       departmentId: toDepartmentArg(data.departmentId),
+      platforms: toPlatformsArg(data.platforms),
     };
 
     try {
@@ -141,6 +149,12 @@ export const AnnouncementFormDialog = ({
               control={form.control}
               description="Only pages whose snippet names this department will show it"
               name="departmentId"
+            />
+
+            <PlatformsField
+              control={form.control}
+              description="Untick a surface to keep this off it - an app download prompt has no business inside the app"
+              name="platforms"
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
